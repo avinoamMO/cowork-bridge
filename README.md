@@ -59,7 +59,7 @@ Every message is logged to `conversation.log` so you can see the full dialogue.
 ### Prerequisites
 
 - Node.js 18+
-- Claude Desktop app with [CDP enabled](#patching-claude-desktop) (requires a patched copy)
+- Claude Desktop app with CDP enabled (requires a patched copy — see [SETUP.md](SETUP.md))
 - tmux (optional, for terminal notifications)
 
 ### Install
@@ -125,17 +125,16 @@ Full API reference in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Patching Claude Desktop
 
-The bridge connects via Chrome DevTools Protocol. Claude Desktop doesn't expose CDP by default, so you need a patched copy:
+The bridge connects via Chrome DevTools Protocol. Claude Desktop doesn't expose CDP by default, so you need a patched copy. The short version:
 
-1. Copy Claude.app to `~/Claude-Debug.app`
+1. Copy Claude.app to `~/Claude-Debug.app` (using tar to strip macOS provenance attributes)
 2. Extract the app.asar archive
-3. Inject `app.commandLine.appendSwitch("remote-debugging-port", "9222")` into the main entry point
-4. Update the ASAR integrity hash in Info.plist
-5. Re-sign with original entitlements
+3. Inject one line of JS to enable CDP on port 9222
+4. Repack asar, update the integrity hash, re-sign with original entitlements
 
-Detailed steps in [ARCHITECTURE.md](ARCHITECTURE.md#claude-desktop-patching-process).
+**Full walkthrough with every gotcha**: [SETUP.md](SETUP.md)
 
-**Important**: Keep this separate from your regular Claude.app. The patch voids the code signature.
+Your regular Claude.app stays untouched.
 
 ---
 
