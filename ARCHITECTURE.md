@@ -543,12 +543,26 @@ curl -s http://localhost:7777/status | jq '.status'
 # Expected: "ok"
 ```
 
+### Important: Send One Complete Message
+
+**Always compose your full message in a single `/typeRaw` call, then press Enter once.** Do NOT send multiple short lines — each `/typeRaw` + `/press Enter` submits a separate message to Cowork, which fragments context and wastes Cowork's rate-limited turns.
+
+```
+WRONG (sends 3 separate messages):
+  typeRaw "Hey"        + press Enter
+  typeRaw "Can you"    + press Enter
+  typeRaw "research X" + press Enter
+
+RIGHT (sends 1 complete message):
+  typeRaw "Hey, can you research X and create a summary doc with findings?" + press Enter
+```
+
 ### Basic Communication Pattern
 
 ```bash
-# 1. Send a message to Cowork
+# 1. Send a COMPLETE message to Cowork (one thought, one send)
 curl -s -X POST http://localhost:7777/typeRaw \
-  --data-raw '{"text":"Hello Cowork, please analyze the current page"}'
+  --data-raw '{"text":"Please analyze the current page and summarize the key findings in a structured format"}'
 
 # 2. Press Enter to send
 curl -s -X POST http://localhost:7777/press \
