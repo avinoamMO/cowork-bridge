@@ -1,0 +1,25 @@
+{
+  "name": "cowork-bridge",
+  "version": "0.1.0",
+  "description": "Bridge between Claude Code and Claude Cowork — two AI agents collaborating in real-time",
+  "main": "bridge.js",
+  "scripts": {
+    "start": "node bridge.js"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "claude-cowork",
+    "ai-agents",
+    "multi-agent",
+    "puppeteer",
+    "cdp",
+    "bridge"
+  ],
+  "author": "avinoamMO",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "puppeteer-core": "^24.37.1"
+  }
+}

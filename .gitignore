@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Runtime artifacts - screenshots
+*.png
+
+# Runtime data files - conversation tracking
+conversation.log
+cowork-to-code.json
+outbox.json
+
+# Internal research documents - not for repository
+RESEARCH_CLAUDE_COWORK.md
+COWORK_EXECUTIVE_SUMMARY.md
