@@ -136,26 +136,61 @@ async function refreshPage() {
  * Finds the Claude tmux session or falls back to first available session
  * @returns {string|null} Tmux session name or null if tmux not available
  */
-function getClaudeTmuxSession() {
+function getClaudeCodeTarget() {
   if (!CONFIG.enableTmuxNotify) {
     return null;
   }
 
-  try {
-    const sessions = execSync('tmux list-sessions -F "#{session_name}"', {
-      encoding: 'utf8',
-      timeout: 2000
-    });
-    const sessionList = sessions.trim().split('\n').filter(s => s.length > 0);
+  // If explicitly configured via env var, use that directly (e.g. "%13" or "mysession:0.0")
+  if (process.env.TMUX_TARGET) {
+    return process.env.TMUX_TARGET;
+  }
 
-    // Try to find a session matching the configured name or containing 'claude'
-    const match = sessionList.find(s =>
-      s.toLowerCase().includes('claude') || s === CONFIG.tmuxSession
+  try {
+    // List all panes with their target, current command, and PID
+    const panes = execSync(
+      'tmux list-panes -a -F "#{pane_id} #{session_name}:#{window_index}.#{pane_index} #{pane_current_command} #{pane_pid}"',
+      { encoding: 'utf8', timeout: 2000 }
     );
 
-    return match || sessionList[0] || null;
+    const bridgePid = String(process.pid);
+    let bestTarget = null;
+
+    for (const line of panes.trim().split('\n')) {
+      const parts = line.split(' ');
+      if (parts.length < 4) continue;
+
+      const [paneId, target, cmd, pid] = parts;
+
+      // Skip the pane running the bridge itself
+      if (pid === bridgePid) continue;
+
+      // Look for a pane running node (Claude Code) that isn't this bridge
+      if (cmd === 'node') {
+        bestTarget = paneId;
+        break;
+      }
+    }
+
+    // Fallback: find any pane running a shell (likely where user will see the notification)
+    if (!bestTarget) {
+      for (const line of panes.trim().split('\n')) {
+        const parts = line.split(' ');
+        if (parts.length < 4) continue;
+        const [paneId, , cmd, pid] = parts;
+        if (pid === bridgePid) continue;
+        if (['zsh', 'bash', 'fish'].includes(cmd)) {
+          bestTarget = paneId;
+          break;
+        }
+      }
+    }
+
+    if (bestTarget) {
+      console.log(`Resolved Claude Code tmux target: ${bestTarget}`);
+    }
+    return bestTarget;
   } catch (error) {
-    // tmux not available or error occurred
     return null;
   }
 }
@@ -166,23 +201,19 @@ function getClaudeTmuxSession() {
  * @returns {boolean} Success status
  */
 function wakeClaudeCode(message) {
-  const session = getClaudeTmuxSession();
-  if (!session) {
+  const target = getClaudeCodeTarget();
+  if (!target) {
     return false;
   }
 
   try {
-    const notifyCmd = `echo "\\n📬 COWORK MESSAGE: Check ~/cowork-bridge/outbox.json\\n"`;
-    execSync(`tmux send-keys -t "${session}" "${notifyCmd}" Enter`, {
-      timeout: 2000,
-      stdio: 'pipe'
-    });
-    execSync(`tmux send-keys -t "${session}" "cat ~/cowork-bridge/outbox.json | jq ." Enter`, {
+    const safeMsg = (message || '').replace(/"/g, '\\"').replace(/\n/g, ' ').slice(0, 200);
+    execSync(`tmux send-keys -t "${target}" "Cowork says: ${safeMsg} -- check ~/cowork-bridge/cowork-to-code.json for full message" Enter`, {
       timeout: 2000,
       stdio: 'pipe'
     });
 
-    console.log(`Notified tmux session: ${session}`);
+    console.log(`Notified tmux pane: ${target}`);
     return true;
   } catch (error) {
     console.log('tmux notify failed:', error.message);
@@ -240,6 +271,9 @@ function startFileWatcher() {
           const messageText = latest.message || JSON.stringify(latest).slice(0, 80);
 
           logMessage('from-cowork', messageText);
+
+          // Wake Claude Code via tmux
+          wakeClaudeCode(messageText);
         } catch (error) {
           // File might be in the middle of being written, ignore parse errors
           if (error.code !== 'ENOENT') {
@@ -693,7 +727,7 @@ async function handleRequest(req, res) {
               browserConnected: browser.isConnected(),
               pageCount: pages.length,
               currentPageUrl: appPage ? appPage.url() : null,
-              tmuxSession: getClaudeTmuxSession()
+              tmuxSession: getClaudeCodeTarget()
             },
             files: {
               outboxExists: fs.existsSync(OUTBOX_FILE),
@@ -710,7 +744,7 @@ async function handleRequest(req, res) {
           result = {
             status: 'ok',
             timestamp: Date.now(),
-            tmuxSession: getClaudeTmuxSession()
+            tmuxSession: getClaudeCodeTarget()
           };
           break;
 
@@ -941,7 +975,7 @@ async function main() {
   await connectToBrowser();
 
   // Start services
-  const tmuxSession = getClaudeTmuxSession();
+  const tmuxSession = getClaudeCodeTarget();
   startServer();
   startFileWatcher();
 

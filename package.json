@@ -1,10 +1,11 @@
 {
   "name": "cowork-bridge",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Bridge between Claude Code and Claude Cowork — two AI agents collaborating in real-time",
   "main": "bridge.js",
   "scripts": {
-    "start": "node bridge.js"
+    "start": "node bridge.js",
+    "poll": "bash poller.sh"
   },
   "keywords": [
     "claude",

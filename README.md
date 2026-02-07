@@ -1,4 +1,4 @@
-# Cowork Bridge
+# Cowork Bridge v0.2.0
 
 **Two AI agents. One workflow.** Connect Claude Code (terminal) and Claude Cowork (desktop) so they can collaborate in real-time.
 
@@ -39,18 +39,20 @@ Code analyzes the codebase for metrics and tech debt. Cowork formats them into a
 ```
 ┌─────────────┐                              ┌─────────────┐
 │ Claude Code  │  HTTP API    ┌──────────┐    │   Claude     │
-│  (Terminal)  │◄────────────►│  Bridge  │◄──►│   Cowork     │
-│              │  JSON files  │ (Node.js)│ CDP│  (Desktop)   │
+│  (Terminal)  │─────────────►│  Bridge  │◄──►│   Cowork     │
+│              │◄─ page scrape│ (Node.js)│ CDP│  (Desktop)   │
 └─────────────┘              └──────────┘    └─────────────┘
 ```
 
 The bridge does three things:
 
-1. **HTTP API** (port 7777) — lets Code control Cowork's UI via Chrome DevTools Protocol
-2. **Shared JSON files** — both agents read and write messages to each other
-3. **Smart notifications** — file watchers + tmux alerts when new messages arrive
+1. **HTTP API** (port 7777) — lets Code send messages and control Cowork's UI via Chrome DevTools Protocol
+2. **Page scraping** — Code reads Cowork's responses by scraping visible text from the page (`GET /text`)
+3. **Polling** — a background poller nudges Code every 3 minutes to check for new Cowork responses
 
 Every message is logged to `conversation.log` so you can see the full dialogue.
+
+> **v0.2.0 update:** Removed the file-based communication layer (`cowork-to-code.json` for responses). Cowork doesn't need to write to any file — Code simply reads the page. This is simpler and more reliable. Added `poller.sh` for automatic check-in reminders.
 
 ---
 
@@ -87,20 +89,41 @@ API:     http://localhost:7777
 ### Talk to Cowork
 
 ```bash
-# Type a message into Cowork's chat
-curl -s -X POST http://localhost:7777/typeRaw --data-raw '{"text":"Hey Cowork, research React 19 features for me"}'
-curl -s -X POST http://localhost:7777/press --data-raw '{"key":"Enter"}'
+# Send a message (type + Enter in one shot)
+curl -s -X POST http://localhost:7777/typeRaw -d '{"text":"Hey Cowork, research React 19 features for me"}' && \
+curl -s -X POST http://localhost:7777/press -d '{"key":"Enter"}'
 
-# Read what Cowork says back
-curl -s http://localhost:7777/text
+# Read Cowork's response (scrapes visible page text)
+curl -s -X POST http://localhost:7777/text
 
-# See the full conversation
-curl -s http://localhost:7777/log --data-raw '{"last":10}'
+# Take a screenshot to see what Cowork is showing
+curl -s -X POST http://localhost:7777/screenshot -d '{"filename":"check.png"}'
 ```
 
-### Let Cowork talk back
+> **Important:** Do NOT use newlines (`\n`) in `typeRaw` text. In Claude's chat UI, newlines trigger Enter which submits the message. Keep messages on a single line.
 
-Cowork writes to `~/cowork-bridge/cowork-to-code.json`. The bridge detects changes automatically and logs them. If you're in tmux, you'll get a notification.
+### Reading Cowork's responses
+
+Cowork replies in the chat like normal. Code reads those responses by scraping the page:
+
+```bash
+# Get visible text (Cowork's latest response is at the bottom)
+curl -s -X POST http://localhost:7777/text | tail -c 2000
+```
+
+No file-based communication needed. Cowork doesn't write to any file — Code just reads the page.
+
+### Auto-polling
+
+Start the poller to get reminded every 3 minutes to check on Cowork:
+
+```bash
+bash poller.sh &
+# Or:
+npm run poll
+```
+
+The poller writes timestamps to `poll-nudge.txt` as a nudge for Code to check in.
 
 ---
 
@@ -184,6 +207,17 @@ Early stage. Contributions welcome:
 - **Code** — PRs for error handling, reconnection, reliability
 
 ---
+
+## Changelog
+
+### v0.2.0 (2026-02-07)
+- **Simplified communication model**: Removed file-based response channel (`cowork-to-code.json`). Code now reads Cowork's responses by scraping the page via `GET /text`.
+- **Added `poller.sh`**: Background script that nudges Claude Code every 3 minutes to check for new Cowork messages.
+- **Newline warning**: Documented that `\n` in `typeRaw` triggers message submission (each newline = Enter in Claude's UI). Messages must be single-line.
+- **Updated CLI**: Added `npm run poll` script.
+
+### v0.1.0 (2026-02-05)
+- Initial release: Puppeteer CDP bridge, HTTP API, bidirectional JSON file messaging, tmux notifications, CLI tool.
 
 ## License
 

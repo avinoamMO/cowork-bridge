@@ -8,6 +8,7 @@ node_modules/
 conversation.log
 cowork-to-code.json
 outbox.json
+poll-nudge.txt
 
 # Internal research documents - not for repository
 RESEARCH_CLAUDE_COWORK.md
