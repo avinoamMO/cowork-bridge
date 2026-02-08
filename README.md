@@ -1,4 +1,4 @@
-# Cowork Bridge v0.2.0
+# Cowork Bridge v0.3.0
 
 **Two AI agents. One workflow.** Connect Claude Code (terminal) and Claude Cowork (desktop) so they can collaborate in real-time.
 
@@ -47,8 +47,8 @@ Code analyzes the codebase for metrics and tech debt. Cowork formats them into a
 The bridge does three things:
 
 1. **HTTP API** (port 7777) — lets Code send messages and control Cowork's UI via Chrome DevTools Protocol
-2. **Page scraping** — Code reads Cowork's responses by scraping visible text from the page (`GET /text`)
-3. **Polling** — a background poller nudges Code every 3 minutes to check for new Cowork responses
+2. **Page scraping** — Code reads Cowork's responses by scraping visible text from the page (`GET /text` or `GET /lastResponse`)
+3. **Smart polling** — a background poller uses content hashing to detect when CoWork has new content, only notifying Code when something actually changed
 
 Every message is logged to `conversation.log` so you can see the full dialogue.
 
@@ -113,9 +113,9 @@ curl -s -X POST http://localhost:7777/text | tail -c 2000
 
 No file-based communication needed. Cowork doesn't write to any file — Code just reads the page.
 
-### Auto-polling
+### Smart polling
 
-Start the poller to get reminded every 3 minutes to check on Cowork:
+Start the smart poller to get notified only when CoWork has new content:
 
 ```bash
 bash poller.sh &
@@ -123,7 +123,14 @@ bash poller.sh &
 npm run poll
 ```
 
-The poller writes timestamps to `poll-nudge.txt` as a nudge for Code to check in.
+The v0.3 poller uses SHA-256 content hashing — it only writes to `poll-nudge.txt` when the page content actually changes. Zero false nudges. It also updates `tasks/agent-task-queue.json` with a `coworkHasNewMessage` flag.
+
+### Shared filesystem (primary communication)
+
+Both agents read/write files in a shared `tasks/` folder:
+- `tasks/agent-task-queue.json` — formal task state machine
+- `tasks/cowork-to-code-checkin.md` — CoWork's messages to Code
+- `tasks/*-completion-report.md` — Code's reports back to CoWork
 
 ---
 
@@ -132,6 +139,7 @@ The poller writes timestamps to `poll-nudge.txt` as a nudge for Code to check in
 | Endpoint | What it does |
 |----------|-------------|
 | `GET /text` | Read visible text from Cowork's page |
+| `GET /lastResponse` | Get only the most recent assistant message |
 | `GET /status` | Health check with connection details |
 | `GET /log` | Get conversation history |
 | `POST /typeRaw` | Type text into Cowork's chat |
@@ -209,6 +217,13 @@ Early stage. Contributions welcome:
 ---
 
 ## Changelog
+
+### v0.3.0 (2026-02-09)
+- **Event-driven poller**: Content-hash based change detection replaces blind 3-minute polling. Zero false nudges.
+- **Shared filesystem as primary channel**: `tasks/agent-task-queue.json` formal task state machine replaces ad-hoc markdown handoffs.
+- **`GET /lastResponse` endpoint**: Returns only the most recent assistant message instead of the entire page.
+- **No more auto-messaging**: Poller no longer types into CoWork's chat, saving rate-limited turns.
+- **CLAUDE.md integration**: Project-level instructions guide Code to use correct communication paths.
 
 ### v0.2.0 (2026-02-07)
 - **Simplified communication model**: Removed file-based response channel (`cowork-to-code.json`). Code now reads Cowork's responses by scraping the page via `GET /text`.

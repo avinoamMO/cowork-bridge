@@ -641,6 +641,32 @@ async function handleRequest(req, res) {
           result = await executeWithRetry(p => getVisibleText(p));
           break;
 
+        case 'lastResponse':
+          result = await executeWithRetry(async (p) => {
+            return await p.evaluate(() => {
+              // Try multiple selectors — Claude Desktop's DOM may vary
+              const selectors = [
+                '[data-message-role="assistant"]',
+                '[data-testid="assistant-message"]',
+                '.assistant-message',
+                '.message-content'
+              ];
+
+              for (const selector of selectors) {
+                const messages = document.querySelectorAll(selector);
+                if (messages.length > 0) {
+                  return messages[messages.length - 1].innerText;
+                }
+              }
+
+              // Fallback: get the last large text block on the page
+              const allText = document.body.innerText;
+              const chunks = allText.split('\n\n').filter(c => c.length > 50);
+              return chunks.length > 0 ? chunks[chunks.length - 1] : '';
+            });
+          });
+          break;
+
         case 'html':
           result = await executeWithRetry(p => getHTML(p));
           break;
@@ -753,7 +779,7 @@ async function handleRequest(req, res) {
           result = {
             error: 'Unknown command',
             available: {
-              query: ['elements', 'textareas', 'buttons', 'text', 'html', 'outbox', 'log'],
+              query: ['elements', 'textareas', 'buttons', 'text', 'lastResponse', 'html', 'outbox', 'log'],
               actions: ['click', 'clickText', 'clickCoords', 'type', 'typeRaw', 'press', 'screenshot', 'focus'],
               bidirectional: ['toClaudeCode', 'clearOutbox'],
               health: ['status', 'ping']

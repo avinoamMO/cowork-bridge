@@ -110,28 +110,25 @@ curl -X POST http://localhost:7777/press --data-raw '{"key":"Enter"}'
 curl http://localhost:7777/text
 ```
 
-### 2. Cowork → Claude Code (Shared File)
+### 2. Cowork → Claude Code (Shared Filesystem — PRIMARY)
 
-**Method**: JSON file writes monitored by fs.watch()
+**Method (v0.3)**: Shared `tasks/` folder on the filesystem. CoWork writes markdown files, Code reads them.
+
+**Primary channel**: `~/coverage-reports/tasks/` (CoWork sees this as `/sessions/.../mnt/tasks/` in its VM)
+
+**Key files**:
+- `tasks/agent-task-queue.json` — Formal task state machine with `coworkHasNewMessage` flag
+- `tasks/cowork-to-code-checkin.md` — CoWork's messages/specs for Code
+- `tasks/*-completion-report.md` — Code's reports back to CoWork
 
 **Flow**:
-1. Cowork writes to `~/cowork-bridge/cowork-to-code.json`
-2. Bridge detects file change (500ms debounce)
-3. Bridge logs message to `conversation.log`
-4. (Optional) Bridge sends tmux notification to Claude Code terminal
+1. CoWork writes spec/message to `tasks/cowork-to-code-checkin.md`
+2. Smart poller detects page content change via SHA-256 hash
+3. Poller sets `coworkHasNewMessage: true` in `tasks/agent-task-queue.json`
+4. Poller sends tmux notification to Code's terminal
+5. Code reads the message, sets flag back to `false`, starts working
 
-**File Format**:
-```json
-[
-  {
-    "timestamp": "2026-02-05T12:34:56.789Z",
-    "message": "Message text here",
-    "data": {
-      "key": "optional metadata"
-    }
-  }
-]
-```
+**Legacy channel** (still functional): `~/cowork-bridge/cowork-to-code.json` monitored by fs.watch() in bridge.js. This path is not accessible from CoWork's VM, so the shared filesystem above is the reliable path.
 
 ### 3. Conversation Log (Persistent History)
 
@@ -189,6 +186,18 @@ Returns visible text from the page body (limited to 5000 characters).
 ```json
 "This is the visible text content..."
 ```
+
+---
+
+#### GET /lastResponse
+Returns only the most recent assistant message from the chat. Tries multiple DOM selectors for Claude Desktop, falls back to the last large text block on the page.
+
+**Response**:
+```json
+"This is the most recent assistant message content..."
+```
+
+**Use this instead of `/text`** when you only need the latest response. Much shorter output.
 
 ---
 
