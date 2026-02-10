@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cowork Bridge - Two AI Agents, One Workflow</title>
+  <meta name="description" content="Connect Claude Code and Claude Desktop for real-time AI agent collaboration via Chrome DevTools Protocol.">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --accent-dim: #1f6feb;
+      --green: #3fb950;
+      --orange: #d29922;
+      --purple: #bc8cff;
+      --code-bg: #0d1117;
+      --max-width: 960px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container { max-width: var(--max-width); margin: 0 auto; padding: 0 24px; }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 80px 24px 60px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero pre {
+      font-size: 14px;
+      line-height: 1.3;
+      color: var(--accent);
+      margin-bottom: 24px;
+      display: inline-block;
+      text-align: left;
+    }
+
+    .hero h1 {
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent-dim);
+      color: white;
+    }
+    .btn-primary:hover { background: var(--accent); text-decoration: none; }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--accent); text-decoration: none; }
+
+    /* Badges */
+    .badges {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+    .badges img { height: 20px; }
+
+    /* Sections */
+    section {
+      padding: 64px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    section:last-child { border-bottom: none; }
+
+    h2 {
+      font-size: 28px;
+      margin-bottom: 16px;
+    }
+
+    h3 {
+      font-size: 20px;
+      margin: 24px 0 12px;
+      color: var(--accent);
+    }
+
+    p { margin-bottom: 16px; color: var(--text-muted); }
+    p strong { color: var(--text); }
+
+    /* Architecture diagram */
+    .diagram {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 32px;
+      overflow-x: auto;
+      margin: 24px 0;
+    }
+
+    .diagram pre {
+      font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--text);
+    }
+
+    /* Code blocks */
+    pre.code-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      overflow-x: auto;
+      margin: 16px 0;
+      font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    code {
+      font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+      background: var(--surface);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+
+    pre code { background: none; padding: 0; }
+
+    /* API table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      font-weight: 600;
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    td { color: var(--text-muted); }
+    td code { color: var(--green); }
+
+    /* Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin: 24px 0;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+    }
+
+    .card h3 { margin-top: 0; }
+    .card p:last-child { margin-bottom: 0; }
+
+    /* Philosophy */
+    .philosophy-point {
+      margin: 24px 0;
+      padding-left: 20px;
+      border-left: 3px solid var(--accent-dim);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 40px 24px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    footer a { color: var(--accent); }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .hero { padding: 48px 16px 40px; }
+      .hero pre { font-size: 10px; }
+      section { padding: 40px 0; }
+      h2 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <div class="hero">
+    <pre>   ___                      _      ___      _    _
+  / __|_____ __ _____ _ _| |__  | _ )_ _(_)__| |__ _ ___
+ | (__/ _ \ V  V / _ \ '_| / /  | _ \ '_| / _` / _` / -_)
+  \___\___/\_/\_/\___/_| |_\_\  |___/_| |_\__,_\__, \___|
+                                                |___/</pre>
+    <h1>Two AI agents. One workflow. Zero copy-paste.</h1>
+
+    <div class="badges">
+      <img src="https://img.shields.io/badge/version-0.3.0-blue.svg" alt="Version 0.3.0">
+      <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License">
+      <img src="https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg" alt="Node.js 18+">
+    </div>
+
+    <div class="hero-actions">
+      <a href="https://github.com/avinoamMO/cowork-bridge" class="btn btn-primary">View on GitHub</a>
+      <a href="#quick-start" class="btn btn-secondary">Quick Start</a>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- What is this -->
+    <section id="about">
+      <h2>What is Cowork Bridge?</h2>
+      <p>
+        <strong>Claude Code</strong> is a terminal-native engineer: git, APIs, databases, code generation.
+        <strong>Claude Desktop</strong> excels at everything outside the terminal: web research, document editing, visual tasks, spreadsheets.
+      </p>
+      <p>
+        <strong>The problem:</strong> They cannot talk to each other.
+      </p>
+      <p>
+        Cowork Bridge creates a bidirectional communication channel between them using Chrome DevTools Protocol
+        and a lightweight HTTP API. It lets them collaborate like a two-person team where each agent does what
+        it is best at.
+      </p>
+    </section>
+
+    <!-- Why Two Agents -->
+    <section id="philosophy">
+      <h2>Why Two Agents?</h2>
+      <p>
+        The future of AI is not one super-agent that does everything. It is specialized agents collaborating,
+        each doing what it is best at, seamlessly handing off work to the other.
+      </p>
+
+      <div class="philosophy-point">
+        <h3>Specialization over generalization</h3>
+        <p>
+          A terminal agent that also tries to browse the web is mediocre at both. A desktop agent that also
+          tries to run git commands is fragile. Let each agent excel in its domain.
+        </p>
+      </div>
+
+      <div class="philosophy-point">
+        <h3>Composability over monoliths</h3>
+        <p>
+          Two focused agents connected by a simple bridge are more reliable, more debuggable, and more
+          maintainable than one massive agent with every capability bolted on.
+        </p>
+      </div>
+
+      <div class="philosophy-point">
+        <h3>Collaboration over isolation</h3>
+        <p>
+          The real power of AI agents comes from their ability to work together. A bug fix becomes a
+          stakeholder report. A research session becomes a shipped feature. The handoff is the product.
+        </p>
+      </div>
+    </section>
+
+    <!-- Architecture -->
+    <section id="architecture">
+      <h2>Architecture</h2>
+
+      <div class="diagram">
+        <pre>
+                    +------------------------------------------+
+                    |            Cowork Bridge (Node.js)        |
+                    |                                          |
+                    |  +----------+   +--------+   +--------+ |
+                    |  | HTTP     |   | File   |   | Tmux   | |
+  Claude Code &lt;---&gt;|  | Server   |   | Watcher|   | Notify | |
+  (terminal)       |  | :7777    |   | (JSON) |   |        | |
+                    |  +----+-----+   +----+---+   +---+----+ |
+                    |       |              |            |       |
+                    |       v              v            v       |
+                    |  +-----------+  +----------+  +------+   |
+                    |  | Puppeteer |  | Shared   |  | Tmux |   |
+                    |  | (CDP)     |  | Files    |  | CLI  |   |
+                    |  +-----+-----+  +----------+  +------+   |
+                    +--------|-----------------------------+
+                             |
+                             | Chrome DevTools Protocol
+                             | (port 9222)
+                             v
+                    +------------------+
+                    | Claude Desktop   |
+                    | (Electron app)   |
+                    | claude.ai        |
+                    +------------------+</pre>
+      </div>
+
+      <h3>Communication Channels</h3>
+      <div class="grid">
+        <div class="card">
+          <h3>Code to Desktop</h3>
+          <p>HTTP requests to port 7777. The bridge uses Puppeteer to type into Desktop's chat, click buttons, or read the page via CDP.</p>
+        </div>
+        <div class="card">
+          <h3>Desktop to Code</h3>
+          <p>Page scraping plus smart polling. A SHA-256 content hash detects when Desktop has new content. Zero false nudges.</p>
+        </div>
+        <div class="card">
+          <h3>Conversation Log</h3>
+          <p>Every message in both directions is appended to <code>conversation.log</code> with timestamps. Full audit trail.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Start -->
+    <section id="quick-start">
+      <h2>Quick Start</h2>
+
+      <h3>Prerequisites</h3>
+      <p>Node.js 18+, Claude Desktop with CDP enabled (<a href="https://github.com/avinoamMO/cowork-bridge/blob/main/SETUP.md">patching guide</a>), tmux (optional).</p>
+
+      <h3>Install and run</h3>
+      <pre class="code-block"><code>git clone https://github.com/avinoamMO/cowork-bridge.git
+cd cowork-bridge
+npm install
+node bridge.js</code></pre>
+
+      <h3>Send your first message</h3>
+      <pre class="code-block"><code># Type a message into Desktop's chat
+curl -s -X POST http://localhost:7777/typeRaw \
+  -d '{"text":"Hey Desktop, research Node.js 22 features for me"}'
+
+# Press Enter to send it
+curl -s -X POST http://localhost:7777/press -d '{"key":"Enter"}'
+
+# Read the response
+curl -s http://localhost:7777/lastResponse</code></pre>
+
+      <h3>Start the smart poller</h3>
+      <pre class="code-block"><code>bash poller.sh &amp;</code></pre>
+      <p>The poller checks every 60 seconds using SHA-256 content hashing. It only notifies Code when something actually changed.</p>
+    </section>
+
+    <!-- API Reference -->
+    <section id="api">
+      <h2>API Reference</h2>
+      <p>Base URL: <code>http://localhost:7777</code></p>
+
+      <h3>Reading Data</h3>
+      <table>
+        <thead>
+          <tr><th>Endpoint</th><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>/lastResponse</code></td><td>GET</td><td>Most recent assistant message</td></tr>
+          <tr><td><code>/text</code></td><td>GET</td><td>All visible page text (max 5000 chars)</td></tr>
+          <tr><td><code>/html</code></td><td>GET</td><td>Full HTML content</td></tr>
+          <tr><td><code>/elements</code></td><td>GET</td><td>All interactive DOM elements</td></tr>
+          <tr><td><code>/buttons</code></td><td>GET</td><td>All button elements</td></tr>
+          <tr><td><code>/textareas</code></td><td>GET</td><td>All text input fields</td></tr>
+          <tr><td><code>/status</code></td><td>GET</td><td>Health check with connection details</td></tr>
+          <tr><td><code>/log</code></td><td>GET</td><td>Conversation history</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Sending Actions</h3>
+      <table>
+        <thead>
+          <tr><th>Endpoint</th><th>Method</th><th>Body</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>/typeRaw</code></td><td>POST</td><td><code>{"text": "..."}</code></td><td>Type into focused element</td></tr>
+          <tr><td><code>/press</code></td><td>POST</td><td><code>{"key": "Enter"}</code></td><td>Press a keyboard key</td></tr>
+          <tr><td><code>/click</code></td><td>POST</td><td><code>{"selector": "#btn"}</code></td><td>Click by CSS selector</td></tr>
+          <tr><td><code>/clickText</code></td><td>POST</td><td><code>{"text": "Submit"}</code></td><td>Click element containing text</td></tr>
+          <tr><td><code>/screenshot</code></td><td>POST</td><td><code>{"filename": "check.png"}</code></td><td>Save screenshot to disk</td></tr>
+        </tbody>
+      </table>
+
+      <p>Full API documentation with request/response examples: <a href="https://github.com/avinoamMO/cowork-bridge/blob/main/ARCHITECTURE.md">ARCHITECTURE.md</a></p>
+    </section>
+
+    <!-- Use Cases -->
+    <section id="use-cases">
+      <h2>Use Cases</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Full Product Sprint</h3>
+          <p>Code handles all engineering. Desktop handles product docs and stakeholder comms. Simultaneously. Like a two-person team that never sleeps.</p>
+        </div>
+        <div class="card">
+          <h3>Research to Implementation</h3>
+          <p>Desktop browses the web, reads papers, synthesizes findings. Code reads the synthesis and builds the feature. End to end.</p>
+        </div>
+        <div class="card">
+          <h3>Bug Fix to Report</h3>
+          <p>Code diagnoses and patches the issue. Desktop formats the resolution into a client-facing test report. Same hour.</p>
+        </div>
+        <div class="card">
+          <h3>Multi-Agent Research</h3>
+          <p>Study agent-to-agent communication patterns. Benchmark task handoff protocols. Experiment with specialized agent collaboration.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Getting Started Tutorial -->
+    <section id="tutorial">
+      <h2>Getting Started Tutorial</h2>
+
+      <h3>Step 1: Patch Claude Desktop</h3>
+      <p>Follow the <a href="https://github.com/avinoamMO/cowork-bridge/blob/main/SETUP.md">SETUP.md</a> guide to create a CDP-enabled copy of Claude Desktop. This involves extracting the app.asar, injecting one line of JavaScript, and re-signing.</p>
+
+      <h3>Step 2: Start the bridge</h3>
+      <pre class="code-block"><code>cd ~/cowork-bridge
+node bridge.js</code></pre>
+      <p>The bridge will auto-detect and connect to Claude Desktop via CDP on port 9222.</p>
+
+      <h3>Step 3: Send a message from Claude Code</h3>
+      <pre class="code-block"><code># In your Claude Code session:
+curl -s -X POST http://localhost:7777/typeRaw \
+  -d '{"text":"Research React 19 features and summarize the top 5"}'
+curl -s -X POST http://localhost:7777/press -d '{"key":"Enter"}'</code></pre>
+
+      <h3>Step 4: Read the response</h3>
+      <pre class="code-block"><code># Wait for Desktop to finish, then:
+curl -s http://localhost:7777/lastResponse</code></pre>
+
+      <h3>Step 5: Automate with the poller</h3>
+      <pre class="code-block"><code># Start background polling (content-hash based, zero false nudges)
+bash poller.sh &amp;</code></pre>
+      <p>The poller writes to <code>poll-nudge.txt</code> when new content is detected and sends a tmux notification to Code's terminal.</p>
+    </section>
+
+  </div>
+
+  <footer>
+    <p>
+      Built by <a href="https://github.com/avinoamMO">@avinoamMO</a> |
+      <a href="https://github.com/avinoamMO/cowork-bridge">GitHub</a> |
+      MIT License
+    </p>
+  </footer>
+
+</body>
+</html>
