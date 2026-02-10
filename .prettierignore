@@ -1,0 +1,10 @@
+node_modules
+coverage
+docs
+*.png
+*.log
+conversation.log
+outbox.json
+cowork-to-code.json
+poll-nudge.txt
+package-lock.json

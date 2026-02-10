@@ -85,7 +85,7 @@ function logError(context, error) {
 
   try {
     fs.appendFileSync(LOG_FILE, line, { encoding: 'utf8' });
-  } catch (e) {
+  } catch (_e) {
     // If we can't write to log, at least console it
   }
   console.error(line.trim());
@@ -158,12 +158,12 @@ function getClaudeCodeTarget() {
 
     for (const line of panes.trim().split('\n')) {
       const parts = line.split(' ');
-      if (parts.length < 4) continue;
+      if (parts.length < 4) { continue; }
 
-      const [paneId, target, cmd, pid] = parts;
+      const [paneId, _target, cmd, pid] = parts;
 
       // Skip the pane running the bridge itself
-      if (pid === bridgePid) continue;
+      if (pid === bridgePid) { continue; }
 
       // Look for a pane running node (Claude Code) that isn't this bridge
       if (cmd === 'node') {
@@ -176,9 +176,9 @@ function getClaudeCodeTarget() {
     if (!bestTarget) {
       for (const line of panes.trim().split('\n')) {
         const parts = line.split(' ');
-        if (parts.length < 4) continue;
+        if (parts.length < 4) { continue; }
         const [paneId, , cmd, pid] = parts;
-        if (pid === bridgePid) continue;
+        if (pid === bridgePid) { continue; }
         if (['zsh', 'bash', 'fish'].includes(cmd)) {
           bestTarget = paneId;
           break;
@@ -190,7 +190,7 @@ function getClaudeCodeTarget() {
       console.log(`Resolved Claude Code tmux target: ${bestTarget}`);
     }
     return bestTarget;
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 }
@@ -839,7 +839,7 @@ async function isCDPAvailable() {
       stdio: 'pipe'
     });
     return true;
-  } catch (error) {
+  } catch (_error) {
     return false;
   }
 }
@@ -970,7 +970,7 @@ process.on('uncaughtException', (error) => {
   process.exit(1);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason, _promise) => {
   logError('unhandledRejection', new Error(String(reason)));
   console.error('Unhandled promise rejection:', reason);
 });

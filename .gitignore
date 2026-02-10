@@ -10,6 +10,19 @@ cowork-to-code.json
 outbox.json
 poll-nudge.txt
 
+# Test coverage
+coverage/
+
 # Internal research documents - not for repository
 RESEARCH_CLAUDE_COWORK.md
 COWORK_EXECUTIVE_SUMMARY.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
