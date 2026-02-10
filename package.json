@@ -1,26 +1,60 @@
 {
   "name": "cowork-bridge",
-  "version": "0.2.0",
-  "description": "Bridge between Claude Code and Claude Cowork — two AI agents collaborating in real-time",
+  "version": "0.3.0",
+  "description": "Bridge between Claude Code and Claude Desktop — two AI agents collaborating in real-time via Chrome DevTools Protocol",
   "main": "bridge.js",
   "scripts": {
     "start": "node bridge.js",
-    "poll": "bash poller.sh"
+    "poll": "bash poller.sh",
+    "test": "jest --coverage",
+    "test:watch": "jest --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [
     "claude",
     "claude-code",
-    "claude-cowork",
+    "claude-desktop",
     "ai-agents",
     "multi-agent",
     "puppeteer",
     "cdp",
-    "bridge"
+    "bridge",
+    "automation",
+    "anthropic",
+    "llm",
+    "agent-collaboration"
   ],
   "author": "avinoamMO",
   "license": "MIT",
   "type": "commonjs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/avinoamMO/cowork-bridge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/avinoamMO/cowork-bridge/issues"
+  },
+  "homepage": "https://avinoammo.github.io/cowork-bridge",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "bridge.js",
+    "poller.sh",
+    "checkin-cron.sh",
+    "types.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
     "puppeteer-core": "^24.37.1"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.2",
+    "jest": "^29.7.0",
+    "prettier": "^3.8.1"
   }
 }
