@@ -1,67 +1,69 @@
-# Cowork Bridge v0.3.0
-
-**Two AI agents. One workflow.** Connect Claude Code (terminal) and Claude Cowork (desktop) so they can collaborate in real-time.
-
----
-
-## What if your AIs could work together?
-
-Claude Code is brilliant at engineering — git, APIs, databases, code. Claude Cowork excels at everything else — documents, spreadsheets, web research, visual tasks.
-
-But they can't talk to each other. **Until now.**
-
-Cowork Bridge lets them collaborate like a two-person team:
-
-### What becomes possible
-
-**Data Pipeline to Boardroom**
-Code pulls data from APIs and databases. Cowork turns it into executive-ready charts and slide decks. No human in the middle.
-
-**Research to Implementation**
-Cowork browses the web, reads papers, synthesizes findings. Code reads the synthesis and builds the feature. End to end.
-
-**Code to Documentation**
-Code ships the feature. Cowork writes the PRD, design doc, and user guide — based on what actually shipped, not what was planned.
-
-**Bug Fix to Stakeholder Report**
-Code diagnoses and patches the issue. Cowork formats the resolution into a client-facing test report. Same hour.
-
-**Full Product Sprint**
-Code handles all engineering. Cowork handles product docs and stakeholder comms. Simultaneously. Like having a two-person team that never sleeps.
-
-**Meeting Prep on Autopilot**
-Code analyzes the codebase for metrics and tech debt. Cowork formats them into a presentation brief with context your PM can actually use.
-
----
-
-## How it works
-
 ```
-┌─────────────┐                              ┌─────────────┐
-│ Claude Code  │  HTTP API    ┌──────────┐    │   Claude     │
-│  (Terminal)  │─────────────►│  Bridge  │◄──►│   Cowork     │
-│              │◄─ page scrape│ (Node.js)│ CDP│  (Desktop)   │
-└─────────────┘              └──────────┘    └─────────────┘
+   ___                      _      ___      _    _
+  / __|_____ __ _____ _ _| |__  | _ )_ _(_)__| |__ _ ___
+ | (__/ _ \ V  V / _ \ '_| / /  | _ \ '_| / _` / _` / -_)
+  \___\___/\_/\_/\___/_| |_\_\  |___/_| |_\__,_\__, \___|
+                                                |___/
+        Two AI agents. One workflow. Zero copy-paste.
 ```
 
-The bridge does three things:
-
-1. **HTTP API** (port 7777) — lets Code send messages and control Cowork's UI via Chrome DevTools Protocol
-2. **Page scraping** — Code reads Cowork's responses by scraping visible text from the page (`GET /text` or `GET /lastResponse`)
-3. **Smart polling** — a background poller uses content hashing to detect when CoWork has new content, only notifying Code when something actually changed
-
-Every message is logged to `conversation.log` so you can see the full dialogue.
-
-> **v0.2.0 update:** Removed the file-based communication layer (`cowork-to-code.json` for responses). Cowork doesn't need to write to any file — Code simply reads the page. This is simpler and more reliable. Added `poller.sh` for automatic check-in reminders.
+[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/avinoamMO/cowork-bridge/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org/)
+[![Tests](https://github.com/avinoamMO/cowork-bridge/actions/workflows/test.yml/badge.svg)](https://github.com/avinoamMO/cowork-bridge/actions/workflows/test.yml)
+[![Lint](https://github.com/avinoamMO/cowork-bridge/actions/workflows/lint.yml/badge.svg)](https://github.com/avinoamMO/cowork-bridge/actions/workflows/lint.yml)
 
 ---
 
-## Quick start
+## What is this?
+
+Cowork Bridge connects **Claude Code** (terminal) and **Claude Desktop** (desktop app) so they can collaborate in real-time -- like a two-person AI team where each agent does what it is best at.
+
+Claude Code is a terminal-native engineer: git, APIs, databases, code generation. Claude Desktop excels at everything outside the terminal: web research, document editing, visual tasks, spreadsheets.
+
+**The problem:** They cannot talk to each other.
+
+**The solution:** Cowork Bridge creates a bidirectional communication channel between them using Chrome DevTools Protocol and a lightweight HTTP API.
+
+```
+                        Cowork Bridge
+                     +-----------------+
+                     |                 |
+   Claude Code       |   Node.js       |       Claude Desktop
+  +-----------+      |   HTTP API      |      +---------------+
+  |           | ---->|   port 7777     |----> |               |
+  | Terminal  |      |                 | CDP  |  Electron App |
+  | engineer  | <----|   Page scraping |<---- |  (claude.ai)  |
+  |           |      |   + polling     |      |               |
+  +-----------+      +-----------------+      +---------------+
+```
+
+**How it works in three sentences:**
+
+1. Claude Code sends messages to Claude Desktop by typing into its chat via the HTTP API (Puppeteer over CDP).
+2. Claude Code reads Desktop's responses by scraping the visible page text.
+3. A smart poller uses SHA-256 content hashing to detect new responses and notify Code only when something actually changed.
+
+---
+
+## What becomes possible
+
+**Research to Implementation** -- Desktop browses the web and synthesizes findings. Code reads the synthesis and builds the feature. End to end.
+
+**Code to Documentation** -- Code ships the feature. Desktop writes the PRD and user guide based on what actually shipped.
+
+**Full Product Sprint** -- Code handles all engineering. Desktop handles product docs and stakeholder comms. Simultaneously.
+
+**Bug Fix to Stakeholder Report** -- Code diagnoses and patches the issue. Desktop formats the resolution into a client-facing report. Same hour.
+
+---
+
+## Quick Start
 
 ### Prerequisites
 
 - Node.js 18+
-- Claude Desktop app with CDP enabled (requires a patched copy — see [SETUP.md](SETUP.md))
+- Claude Desktop app with CDP enabled (requires a patched copy -- see [SETUP.md](SETUP.md))
 - tmux (optional, for terminal notifications)
 
 ### Install
@@ -75,168 +77,362 @@ npm install
 ### Run
 
 ```bash
-# Start the bridge (connects to Claude Desktop automatically)
 node bridge.js
 ```
 
-You'll see:
+You will see:
+
 ```
+==================================================
 BRIDGE READY
+==================================================
 Status:  http://localhost:7777/status
 API:     http://localhost:7777
+CDP:     http://127.0.0.1:9222
 ```
 
-### Talk to Cowork
+### Send your first message
 
 ```bash
-# Send a message (type + Enter in one shot)
-curl -s -X POST http://localhost:7777/typeRaw -d '{"text":"Hey Cowork, research React 19 features for me"}' && \
+# Type a message into Desktop's chat
+curl -s -X POST http://localhost:7777/typeRaw \
+  -d '{"text":"Hey Desktop, research the latest Node.js 22 features for me"}'
+
+# Press Enter to send it
 curl -s -X POST http://localhost:7777/press -d '{"key":"Enter"}'
 
-# Read Cowork's response (scrapes visible page text)
-curl -s -X POST http://localhost:7777/text
-
-# Take a screenshot to see what Cowork is showing
-curl -s -X POST http://localhost:7777/screenshot -d '{"filename":"check.png"}'
+# Wait a moment, then read the response
+curl -s http://localhost:7777/lastResponse
 ```
 
-> **Important:** Do NOT use newlines (`\n`) in `typeRaw` text. In Claude's chat UI, newlines trigger Enter which submits the message. Keep messages on a single line.
-
-### Reading Cowork's responses
-
-Cowork replies in the chat like normal. Code reads those responses by scraping the page:
-
-```bash
-# Get visible text (Cowork's latest response is at the bottom)
-curl -s -X POST http://localhost:7777/text | tail -c 2000
-```
-
-No file-based communication needed. Cowork doesn't write to any file — Code just reads the page.
-
-### Smart polling
-
-Start the smart poller to get notified only when CoWork has new content:
+### Start the smart poller
 
 ```bash
 bash poller.sh &
-# Or:
-npm run poll
 ```
 
-The v0.3 poller uses SHA-256 content hashing — it only writes to `poll-nudge.txt` when the page content actually changes. Zero false nudges. It also updates `tasks/agent-task-queue.json` with a `coworkHasNewMessage` flag.
-
-### Shared filesystem (primary communication)
-
-Both agents read/write files in a shared `tasks/` folder:
-- `tasks/agent-task-queue.json` — formal task state machine
-- `tasks/cowork-to-code-checkin.md` — CoWork's messages to Code
-- `tasks/*-completion-report.md` — Code's reports back to CoWork
+The poller checks every 60 seconds using SHA-256 content hashing. It only notifies Code when something actually changed -- zero false nudges.
 
 ---
 
-## API at a glance
+## API Reference
 
-| Endpoint | What it does |
-|----------|-------------|
-| `GET /text` | Read visible text from Cowork's page |
-| `GET /lastResponse` | Get only the most recent assistant message |
-| `GET /status` | Health check with connection details |
-| `GET /log` | Get conversation history |
-| `POST /typeRaw` | Type text into Cowork's chat |
-| `POST /press` | Press a key (Enter, Escape, etc.) |
-| `POST /click` | Click an element by CSS selector |
-| `POST /screenshot` | Capture what Cowork is showing |
-| `GET /elements` | List all interactive elements on page |
-| `GET /buttons` | List all buttons |
-| `GET /textareas` | List all text inputs |
+Base URL: `http://localhost:7777`
 
-Full API reference in [ARCHITECTURE.md](ARCHITECTURE.md).
+### Reading data
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/lastResponse` | GET | Most recent assistant message only |
+| `/text` | GET | All visible page text (max 5000 chars) |
+| `/html` | GET | Full HTML content of the page |
+| `/elements` | GET | All interactive DOM elements with selectors and bounds |
+| `/buttons` | GET | All button elements |
+| `/textareas` | GET | All text input fields |
+| `/status` | GET | Health check with connection details |
+| `/log` | GET/POST | Conversation history (accepts `{"last": N}`) |
+| `/outbox` | GET | Messages sent from bridge to Code |
+| `/ping` | GET | Simple health check (legacy) |
+
+### Sending actions
+
+| Endpoint | Method | Body | Description |
+|----------|--------|------|-------------|
+| `/typeRaw` | POST | `{"text": "..."}` | Type into the focused element |
+| `/type` | POST | `{"selector": "...", "text": "..."}` | Clear and type into a specific element |
+| `/press` | POST | `{"key": "Enter"}` | Press a keyboard key |
+| `/click` | POST | `{"selector": "#btn"}` | Click by CSS selector |
+| `/clickText` | POST | `{"text": "Submit"}` | Click element containing text (XPath) |
+| `/clickCoords` | POST | `{"x": 100, "y": 200}` | Click at coordinates |
+| `/focus` | POST | `{"selector": "..."}` | Focus an element |
+| `/screenshot` | POST | `{"filename": "check.png"}` | Save screenshot to disk |
+
+### Messaging
+
+| Endpoint | Method | Body | Description |
+|----------|--------|------|-------------|
+| `/toClaudeCode` | POST | `{"message": "...", "data": {...}}` | Send message to Code via outbox |
+| `/clearOutbox` | POST | -- | Clear the outbox |
+
+### Example: GET /status response
+
+```json
+{
+  "status": "ok",
+  "timestamp": 1738761234567,
+  "uptime": 123.45,
+  "config": {
+    "httpPort": 7777,
+    "cdpPort": 9222,
+    "tmuxEnabled": true
+  },
+  "connection": {
+    "browserConnected": true,
+    "pageCount": 3,
+    "currentPageUrl": "https://claude.ai/chat/...",
+    "tmuxSession": "%13"
+  },
+  "files": {
+    "outboxExists": true,
+    "coworkFileExists": true,
+    "logSize": 4096
+  }
+}
+```
+
+### Error responses
+
+All endpoints return errors as JSON with HTTP 500:
+
+```json
+{
+  "error": "Target closed. Most likely the page has been closed."
+}
+```
+
+The bridge auto-recovers from page detachment errors by refreshing its page reference and retrying once.
+
+---
+
+## Configuration
+
+All settings are controlled via environment variables. Every variable has a sensible default.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CLAUDE_PATH` | `~/Claude-Debug.app/Contents/MacOS/Claude` | Patched Claude Desktop binary |
+| `HTTP_PORT` | `7777` | Bridge HTTP API port |
+| `CDP_PORT` | `9222` | Chrome DevTools Protocol port |
+| `BRIDGE_DIR` | Script directory | Directory for shared files |
+| `TMUX_SESSION` | `claude` | Tmux session name |
+| `TMUX_TARGET` | Auto-detected | Explicit tmux pane target |
+| `CDP_TIMEOUT` | `30` | Seconds to wait for CDP on startup |
+| `FILE_WATCH_DEBOUNCE` | `500` | Debounce interval (ms) for file watcher |
+| `OUTBOX_MAX` | `50` | Max messages in outbox.json |
+| `ENABLE_TMUX_NOTIFY` | `true` | Set `false` to disable tmux |
+
+```bash
+# Example: custom ports, tmux disabled
+HTTP_PORT=8888 CDP_PORT=9223 ENABLE_TMUX_NOTIFY=false node bridge.js
+```
+
+---
+
+## Architecture
+
+```
+                    +------------------------------------------+
+                    |            Cowork Bridge (Node.js)        |
+                    |                                          |
+                    |  +----------+   +--------+   +--------+ |
+                    |  | HTTP     |   | File   |   | Tmux   | |
+  Claude Code <--->|  | Server   |   | Watcher|   | Notify | |
+  (terminal)       |  | :7777    |   | (JSON) |   |        | |
+                    |  +----+-----+   +----+---+   +---+----+ |
+                    |       |              |            |       |
+                    |       v              v            v       |
+                    |  +-----------+  +----------+  +------+   |
+                    |  | Puppeteer |  | Shared   |  | Tmux |   |
+                    |  | (CDP)     |  | Files    |  | CLI  |   |
+                    |  +-----+-----+  +----------+  +------+   |
+                    +--------|-----------------------------+
+                             |
+                             | Chrome DevTools Protocol
+                             | (port 9222)
+                             v
+                    +------------------+
+                    | Claude Desktop   |
+                    | (Electron app)   |
+                    | claude.ai        |
+                    +------------------+
+```
+
+### Communication channels
+
+1. **Code to Desktop** (HTTP API): Code sends HTTP requests to the bridge, which uses Puppeteer to type into Desktop's chat, click buttons, or read the page.
+
+2. **Desktop to Code** (page scraping + polling): Code reads Desktop's responses by scraping visible text. The smart poller detects changes via content hashing and sets a flag in the shared task queue.
+
+3. **Conversation log**: Every message in both directions is appended to `conversation.log` with timestamps.
+
+4. **Tmux notifications**: When Desktop has new content, the bridge can send a notification to Code's terminal via tmux.
+
+### Key files
+
+```
+cowork-bridge/
+  bridge.js            # Main server: HTTP API + Puppeteer CDP + file watcher
+  poller.sh            # Smart content-hash poller (runs as background process)
+  checkin-cron.sh      # Periodic check-in script (optional)
+  conversation.log     # Append-only message history (gitignored)
+  outbox.json          # Bridge-to-Code message queue (gitignored)
+  cowork-to-code.json  # Desktop-to-Code messages (gitignored)
+```
 
 ---
 
 ## Patching Claude Desktop
 
-The bridge connects via Chrome DevTools Protocol. Claude Desktop doesn't expose CDP by default, so you need a patched copy. The short version:
+The bridge connects via Chrome DevTools Protocol. Claude Desktop does not expose CDP by default, so you need a patched copy. The process:
 
-1. Copy Claude.app to `~/Claude-Debug.app` (using tar to strip macOS provenance attributes)
-2. Extract the app.asar archive
+1. Copy `Claude.app` to `~/Claude-Debug.app` (using tar to strip macOS provenance attributes)
+2. Extract the `app.asar` archive
 3. Inject one line of JS to enable CDP on port 9222
-4. Repack asar, update the integrity hash, re-sign with original entitlements
+4. Repack asar, update the integrity hash in `Info.plist`
+5. Re-sign with the original entitlements
 
-**Full walkthrough with every gotcha**: [SETUP.md](SETUP.md)
+Your regular `Claude.app` stays untouched.
 
-Your regular Claude.app stays untouched.
+**Full walkthrough:** [SETUP.md](SETUP.md)
 
 ---
 
-## Risks & limitations
+## Use Cases
+
+### For AI-assisted development teams
+
+- Run a full product sprint: Code builds features while Desktop handles specs, docs, and comms
+- Automate QA workflows: Code runs tests, Desktop formats results into stakeholder reports
+- Research-driven development: Desktop researches APIs and libraries, Code implements based on findings
+
+### For multi-agent researchers
+
+- Study agent-to-agent communication patterns
+- Benchmark task handoff protocols
+- Experiment with specialized agent collaboration
+
+### For Claude Code power users
+
+- Extend Code's capabilities with Desktop's web browsing and document editing
+- Automate repetitive workflows that span terminal and browser
+- Build custom toolchains that leverage both agents
+
+---
+
+## Troubleshooting
+
+### Bridge won't start
+
+```bash
+# Port already in use?
+lsof -ti:7777 | xargs kill -9
+
+# CDP not available?
+curl -s http://127.0.0.1:9222/json/version
+# If "Connection refused": Claude Desktop isn't running or isn't patched
+```
+
+### Page errors ("Target closed", "detached")
+
+The bridge auto-recovers by refreshing its page reference and retrying. If errors persist, restart the bridge -- Claude Desktop keeps running.
+
+### Poller not detecting changes
+
+```bash
+# Check if bridge is responding
+curl -s http://localhost:7777/status | python3 -m json.tool
+
+# Check poller process
+ps aux | grep poller
+```
+
+### After a Claude Desktop update
+
+You need to re-patch. The `app.asar` changes with each update. Follow [SETUP.md](SETUP.md) again.
+
+For a full troubleshooting checklist, see [ARCHITECTURE.md](ARCHITECTURE.md).
+
+---
+
+## Risks and Limitations
 
 This is experimental software. Be aware:
 
-- **Patched app required** — you're modifying a signed Electron app (not officially supported)
-- **DOM can break** — Claude Desktop UI updates may change element structure
-- **No authentication** — the HTTP API is localhost-only but has no auth layer
-- **Puppeteer fragility** — browser automation can be flaky after app updates
-- **Not endorsed by Anthropic** — this is a community project
+- **Patched app required** -- you are modifying a signed Electron app (not officially supported)
+- **DOM can break** -- Claude Desktop UI updates may change element structure
+- **No authentication** -- the HTTP API is localhost-only but has no auth layer
+- **Puppeteer fragility** -- browser automation can be flaky after app updates
+- **Not endorsed by Anthropic** -- this is a community project
 
 **Use at your own risk. Back up your work.**
 
 ---
 
-## For AI agents
+## Development
 
-If you're an LLM reading this, see [ARCHITECTURE.md](ARCHITECTURE.md) for:
-- Complete API reference with request/response examples
-- Step-by-step usage guides for both Claude Code and Cowork
-- Configuration via environment variables
-- Failure modes and recovery procedures
-- Security model
+```bash
+# Install dependencies
+npm install
 
----
+# Run tests (52 tests)
+npm test
 
-## Why this matters
+# Run linting
+npm run lint
 
-AI agents are powerful but siloed. Claude Code can't browse the web. Claude Cowork can't run git commands. Each is half a workflow.
+# Check formatting
+npm run format:check
 
-**Cowork Bridge makes them whole.**
+# Fix formatting
+npm run format
+```
 
-The future of AI isn't one super-agent that does everything. It's specialized agents collaborating — each doing what it's best at, seamlessly handing off work to the other.
+### Project structure
 
-This is a first step toward that.
+```
+cowork-bridge/
+  bridge.js              # Main bridge server
+  poller.sh              # Smart content-hash poller
+  checkin-cron.sh        # Periodic check-in cron
+  tests/
+    bridge.test.js       # Jest test suite (52 tests)
+  docs/
+    index.html           # GitHub Pages documentation site
+    gtm.md               # Go-to-market strategy
+  types.d.ts             # TypeScript type definitions
+  .github/workflows/
+    test.yml             # CI: tests on Node 18/20/22
+    lint.yml             # CI: ESLint + Prettier checks
+  eslint.config.js       # ESLint configuration
+  .prettierrc            # Prettier configuration
+  jest.config.js         # Jest configuration
+```
 
 ---
 
 ## Contributing
 
-Early stage. Contributions welcome:
+Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
-- **Bug reports** — open an issue with steps to reproduce
-- **Use cases** — describe what you're trying to do
-- **Code** — PRs for error handling, reconnection, reliability
+Priority areas:
+- Reconnection logic for CDP drops
+- Cross-platform support (Windows, Linux)
+- Optional API authentication
+- WebSocket event streaming
 
 ---
 
 ## Changelog
 
+See [CHANGELOG.md](CHANGELOG.md) for the full release history.
+
 ### v0.3.0 (2026-02-09)
-- **Event-driven poller**: Content-hash based change detection replaces blind 3-minute polling. Zero false nudges.
-- **Shared filesystem as primary channel**: `tasks/agent-task-queue.json` formal task state machine replaces ad-hoc markdown handoffs.
-- **`GET /lastResponse` endpoint**: Returns only the most recent assistant message instead of the entire page.
-- **No more auto-messaging**: Poller no longer types into CoWork's chat, saving rate-limited turns.
-- **CLAUDE.md integration**: Project-level instructions guide Code to use correct communication paths.
+- Event-driven poller with SHA-256 content hashing
+- `GET /lastResponse` endpoint
+- Shared filesystem as primary communication channel
 
 ### v0.2.0 (2026-02-07)
-- **Simplified communication model**: Removed file-based response channel (`cowork-to-code.json`). Code now reads Cowork's responses by scraping the page via `GET /text`.
-- **Added `poller.sh`**: Background script that nudges Claude Code every 3 minutes to check for new Cowork messages.
-- **Newline warning**: Documented that `\n` in `typeRaw` triggers message submission (each newline = Enter in Claude's UI). Messages must be single-line.
-- **Updated CLI**: Added `npm run poll` script.
+- Simplified communication: page scraping replaces file-based responses
+- Added `poller.sh` for automatic polling
 
 ### v0.1.0 (2026-02-05)
-- Initial release: Puppeteer CDP bridge, HTTP API, bidirectional JSON file messaging, tmux notifications, CLI tool.
+- Initial release: Puppeteer CDP bridge, HTTP API, bidirectional messaging
+
+---
 
 ## License
 
-MIT
+[MIT](LICENSE)
 
 ---
 
