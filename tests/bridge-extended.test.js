@@ -370,7 +370,7 @@ describe('Bridge State Management', () => {
     let cleanupCount = 0;
 
     function shutdown() {
-      if (isShuttingDown) return;
+      if (isShuttingDown) { return; }
       isShuttingDown = true;
       cleanupCount++;
     }
@@ -547,7 +547,7 @@ describe('HTTP API Extended', () => {
       });
 
       req.on('error', reject);
-      if (body) req.write(JSON.stringify(body));
+      if (body) { req.write(JSON.stringify(body)); }
       req.end();
     });
   }
