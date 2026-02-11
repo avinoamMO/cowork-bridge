@@ -364,7 +364,7 @@ This is experimental software. Be aware:
 # Install dependencies
 npm install
 
-# Run tests (52 tests)
+# Run tests (93 tests)
 npm test
 
 # Run linting
@@ -385,7 +385,7 @@ cowork-bridge/
   poller.sh              # Smart content-hash poller
   checkin-cron.sh        # Periodic check-in cron
   tests/
-    bridge.test.js       # Jest test suite (52 tests)
+    bridge.test.js       # Jest test suite (93 tests)
   docs/
     index.html           # GitHub Pages documentation site
     gtm.md               # Go-to-market strategy
