@@ -121,38 +121,38 @@ Base URL: `http://localhost:7777`
 
 ### Reading data
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/lastResponse` | GET | Most recent assistant message only |
-| `/text` | GET | All visible page text (max 5000 chars) |
-| `/html` | GET | Full HTML content of the page |
-| `/elements` | GET | All interactive DOM elements with selectors and bounds |
-| `/buttons` | GET | All button elements |
-| `/textareas` | GET | All text input fields |
-| `/status` | GET | Health check with connection details |
-| `/log` | GET/POST | Conversation history (accepts `{"last": N}`) |
-| `/outbox` | GET | Messages sent from bridge to Code |
-| `/ping` | GET | Simple health check (legacy) |
+| Endpoint        | Method   | Description                                            |
+| --------------- | -------- | ------------------------------------------------------ |
+| `/lastResponse` | GET      | Most recent assistant message only                     |
+| `/text`         | GET      | All visible page text (max 5000 chars)                 |
+| `/html`         | GET      | Full HTML content of the page                          |
+| `/elements`     | GET      | All interactive DOM elements with selectors and bounds |
+| `/buttons`      | GET      | All button elements                                    |
+| `/textareas`    | GET      | All text input fields                                  |
+| `/status`       | GET      | Health check with connection details                   |
+| `/log`          | GET/POST | Conversation history (accepts `{"last": N}`)           |
+| `/outbox`       | GET      | Messages sent from bridge to Code                      |
+| `/ping`         | GET      | Simple health check (legacy)                           |
 
 ### Sending actions
 
-| Endpoint | Method | Body | Description |
-|----------|--------|------|-------------|
-| `/typeRaw` | POST | `{"text": "..."}` | Type into the focused element |
-| `/type` | POST | `{"selector": "...", "text": "..."}` | Clear and type into a specific element |
-| `/press` | POST | `{"key": "Enter"}` | Press a keyboard key |
-| `/click` | POST | `{"selector": "#btn"}` | Click by CSS selector |
-| `/clickText` | POST | `{"text": "Submit"}` | Click element containing text (XPath) |
-| `/clickCoords` | POST | `{"x": 100, "y": 200}` | Click at coordinates |
-| `/focus` | POST | `{"selector": "..."}` | Focus an element |
-| `/screenshot` | POST | `{"filename": "check.png"}` | Save screenshot to disk |
+| Endpoint       | Method | Body                                 | Description                            |
+| -------------- | ------ | ------------------------------------ | -------------------------------------- |
+| `/typeRaw`     | POST   | `{"text": "..."}`                    | Type into the focused element          |
+| `/type`        | POST   | `{"selector": "...", "text": "..."}` | Clear and type into a specific element |
+| `/press`       | POST   | `{"key": "Enter"}`                   | Press a keyboard key                   |
+| `/click`       | POST   | `{"selector": "#btn"}`               | Click by CSS selector                  |
+| `/clickText`   | POST   | `{"text": "Submit"}`                 | Click element containing text (XPath)  |
+| `/clickCoords` | POST   | `{"x": 100, "y": 200}`               | Click at coordinates                   |
+| `/focus`       | POST   | `{"selector": "..."}`                | Focus an element                       |
+| `/screenshot`  | POST   | `{"filename": "check.png"}`          | Save screenshot to disk                |
 
 ### Messaging
 
-| Endpoint | Method | Body | Description |
-|----------|--------|------|-------------|
-| `/toClaudeCode` | POST | `{"message": "...", "data": {...}}` | Send message to Code via outbox |
-| `/clearOutbox` | POST | -- | Clear the outbox |
+| Endpoint        | Method | Body                                | Description                     |
+| --------------- | ------ | ----------------------------------- | ------------------------------- |
+| `/toClaudeCode` | POST   | `{"message": "...", "data": {...}}` | Send message to Code via outbox |
+| `/clearOutbox`  | POST   | --                                  | Clear the outbox                |
 
 ### Example: GET /status response
 
@@ -198,18 +198,18 @@ The bridge auto-recovers from page detachment errors by refreshing its page refe
 
 All settings are controlled via environment variables. Every variable has a sensible default.
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `CLAUDE_PATH` | `~/Claude-Debug.app/Contents/MacOS/Claude` | Patched Claude Desktop binary |
-| `HTTP_PORT` | `7777` | Bridge HTTP API port |
-| `CDP_PORT` | `9222` | Chrome DevTools Protocol port |
-| `BRIDGE_DIR` | Script directory | Directory for shared files |
-| `TMUX_SESSION` | `claude` | Tmux session name |
-| `TMUX_TARGET` | Auto-detected | Explicit tmux pane target |
-| `CDP_TIMEOUT` | `30` | Seconds to wait for CDP on startup |
-| `FILE_WATCH_DEBOUNCE` | `500` | Debounce interval (ms) for file watcher |
-| `OUTBOX_MAX` | `50` | Max messages in outbox.json |
-| `ENABLE_TMUX_NOTIFY` | `true` | Set `false` to disable tmux |
+| Variable              | Default                                    | Description                             |
+| --------------------- | ------------------------------------------ | --------------------------------------- |
+| `CLAUDE_PATH`         | `~/Claude-Debug.app/Contents/MacOS/Claude` | Patched Claude Desktop binary           |
+| `HTTP_PORT`           | `7777`                                     | Bridge HTTP API port                    |
+| `CDP_PORT`            | `9222`                                     | Chrome DevTools Protocol port           |
+| `BRIDGE_DIR`          | Script directory                           | Directory for shared files              |
+| `TMUX_SESSION`        | `claude`                                   | Tmux session name                       |
+| `TMUX_TARGET`         | Auto-detected                              | Explicit tmux pane target               |
+| `CDP_TIMEOUT`         | `30`                                       | Seconds to wait for CDP on startup      |
+| `FILE_WATCH_DEBOUNCE` | `500`                                      | Debounce interval (ms) for file watcher |
+| `OUTBOX_MAX`          | `50`                                       | Max messages in outbox.json             |
+| `ENABLE_TMUX_NOTIFY`  | `true`                                     | Set `false` to disable tmux             |
 
 ```bash
 # Example: custom ports, tmux disabled
@@ -405,6 +405,7 @@ cowork-bridge/
 Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 Priority areas:
+
 - Reconnection logic for CDP drops
 - Cross-platform support (Windows, Linux)
 - Optional API authentication
@@ -417,15 +418,18 @@ Priority areas:
 See [CHANGELOG.md](CHANGELOG.md) for the full release history.
 
 ### v0.3.0 (2026-02-09)
+
 - Event-driven poller with SHA-256 content hashing
 - `GET /lastResponse` endpoint
 - Shared filesystem as primary communication channel
 
 ### v0.2.0 (2026-02-07)
+
 - Simplified communication: page scraping replaces file-based responses
 - Added `poller.sh` for automatic polling
 
 ### v0.1.0 (2026-02-05)
+
 - Initial release: Puppeteer CDP bridge, HTTP API, bidirectional messaging
 
 ---

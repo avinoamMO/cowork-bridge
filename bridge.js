@@ -158,12 +158,16 @@ function getClaudeCodeTarget() {
 
     for (const line of panes.trim().split('\n')) {
       const parts = line.split(' ');
-      if (parts.length < 4) { continue; }
+      if (parts.length < 4) {
+        continue;
+      }
 
       const [paneId, _target, cmd, pid] = parts;
 
       // Skip the pane running the bridge itself
-      if (pid === bridgePid) { continue; }
+      if (pid === bridgePid) {
+        continue;
+      }
 
       // Look for a pane running node (Claude Code) that isn't this bridge
       if (cmd === 'node') {
@@ -176,9 +180,13 @@ function getClaudeCodeTarget() {
     if (!bestTarget) {
       for (const line of panes.trim().split('\n')) {
         const parts = line.split(' ');
-        if (parts.length < 4) { continue; }
+        if (parts.length < 4) {
+          continue;
+        }
         const [paneId, , cmd, pid] = parts;
-        if (pid === bridgePid) { continue; }
+        if (pid === bridgePid) {
+          continue;
+        }
         if (['zsh', 'bash', 'fish'].includes(cmd)) {
           bestTarget = paneId;
           break;
@@ -208,10 +216,13 @@ function wakeClaudeCode(message) {
 
   try {
     const safeMsg = (message || '').replace(/"/g, '\\"').replace(/\n/g, ' ').slice(0, 200);
-    execSync(`tmux send-keys -t "${target}" "Cowork says: ${safeMsg} -- check ~/cowork-bridge/cowork-to-code.json for full message" Enter`, {
-      timeout: 2000,
-      stdio: 'pipe'
-    });
+    execSync(
+      `tmux send-keys -t "${target}" "Cowork says: ${safeMsg} -- check ~/cowork-bridge/cowork-to-code.json for full message" Enter`,
+      {
+        timeout: 2000,
+        stdio: 'pipe',
+      }
+    );
 
     console.log(`Notified tmux pane: ${target}`);
     return true;
@@ -301,7 +312,7 @@ function sendToClaudeCode(message, data = {}) {
       timestamp: new Date().toISOString(),
       message,
       data,
-      read: false
+      read: false,
     };
 
     // Load existing outbox
@@ -356,11 +367,11 @@ async function getAllInteractiveElements(page) {
       'textarea',
       '[role="button"]',
       '[onclick]',
-      '[tabindex]'
+      '[tabindex]',
     ];
 
-    selectors.forEach(selector => {
-      document.querySelectorAll(selector).forEach(el => {
+    selectors.forEach((selector) => {
+      document.querySelectorAll(selector).forEach((el) => {
         const rect = el.getBoundingClientRect();
 
         // Only include visible elements
@@ -379,8 +390,8 @@ async function getAllInteractiveElements(page) {
               x: rect.x,
               y: rect.y,
               width: rect.width,
-              height: rect.height
-            }
+              height: rect.height,
+            },
           });
         }
       });
@@ -403,7 +414,7 @@ async function getAllInteractiveElements(page) {
 
       const parent = el.parentElement;
       if (parent) {
-        const siblings = Array.from(parent.children).filter(c => c.tagName === el.tagName);
+        const siblings = Array.from(parent.children).filter((c) => c.tagName === el.tagName);
         const index = siblings.indexOf(el) + 1;
         return `${el.tagName.toLowerCase()}:nth-of-type(${index})`;
       }
@@ -437,9 +448,9 @@ async function getTextareas(page) {
           x: rect.x,
           y: rect.y,
           width: rect.width,
-          height: rect.height
+          height: rect.height,
         },
-        visible: rect.width > 0 && rect.height > 0
+        visible: rect.width > 0 && rect.height > 0,
       });
     });
 
@@ -472,9 +483,9 @@ async function getButtons(page) {
           x: rect.x,
           y: rect.y,
           width: rect.width,
-          height: rect.height
+          height: rect.height,
         },
-        visible: rect.width > 0 && rect.height > 0
+        visible: rect.width > 0 && rect.height > 0,
       });
     });
 
@@ -594,7 +605,7 @@ async function handleRequest(req, res) {
 
   let body = '';
 
-  req.on('data', chunk => {
+  req.on('data', (chunk) => {
     body += chunk.toString();
   });
 
@@ -611,9 +622,11 @@ async function handleRequest(req, res) {
           return await fn(page);
         } catch (error) {
           // If page is detached or target closed, refresh and retry once
-          if (error.message.includes('detached') ||
-              error.message.includes('Target closed') ||
-              error.message.includes('Session closed')) {
+          if (
+            error.message.includes('detached') ||
+            error.message.includes('Target closed') ||
+            error.message.includes('Session closed')
+          ) {
             console.log('Page stale, refreshing...');
             page = await refreshPage();
             return await fn(page);
@@ -626,19 +639,19 @@ async function handleRequest(req, res) {
       switch (action) {
         // Query endpoints
         case 'elements':
-          result = await executeWithRetry(p => getAllInteractiveElements(p));
+          result = await executeWithRetry((p) => getAllInteractiveElements(p));
           break;
 
         case 'textareas':
-          result = await executeWithRetry(p => getTextareas(p));
+          result = await executeWithRetry((p) => getTextareas(p));
           break;
 
         case 'buttons':
-          result = await executeWithRetry(p => getButtons(p));
+          result = await executeWithRetry((p) => getButtons(p));
           break;
 
         case 'text':
-          result = await executeWithRetry(p => getVisibleText(p));
+          result = await executeWithRetry((p) => getVisibleText(p));
           break;
 
         case 'lastResponse':
@@ -649,7 +662,7 @@ async function handleRequest(req, res) {
                 '[data-message-role="assistant"]',
                 '[data-testid="assistant-message"]',
                 '.assistant-message',
-                '.message-content'
+                '.message-content',
               ];
 
               for (const selector of selectors) {
@@ -661,49 +674,49 @@ async function handleRequest(req, res) {
 
               // Fallback: get the last large text block on the page
               const allText = document.body.innerText;
-              const chunks = allText.split('\n\n').filter(c => c.length > 50);
+              const chunks = allText.split('\n\n').filter((c) => c.length > 50);
               return chunks.length > 0 ? chunks[chunks.length - 1] : '';
             });
           });
           break;
 
         case 'html':
-          result = await executeWithRetry(p => getHTML(p));
+          result = await executeWithRetry((p) => getHTML(p));
           break;
 
         // Action endpoints
         case 'click':
-          result = await executeWithRetry(p => clickElement(p, cmd.selector));
+          result = await executeWithRetry((p) => clickElement(p, cmd.selector));
           break;
 
         case 'clickText':
-          result = await executeWithRetry(p => clickByText(p, cmd.text));
+          result = await executeWithRetry((p) => clickByText(p, cmd.text));
           break;
 
         case 'clickCoords':
-          result = await executeWithRetry(p => clickAtCoords(p, cmd.x, cmd.y));
+          result = await executeWithRetry((p) => clickAtCoords(p, cmd.x, cmd.y));
           break;
 
         case 'type':
-          result = await executeWithRetry(p => typeText(p, cmd.selector, cmd.text));
+          result = await executeWithRetry((p) => typeText(p, cmd.selector, cmd.text));
           logMessage('to-cowork', cmd.text);
           break;
 
         case 'typeRaw':
-          result = await executeWithRetry(p => typeIntoFocused(p, cmd.text));
+          result = await executeWithRetry((p) => typeIntoFocused(p, cmd.text));
           logMessage('to-cowork', cmd.text);
           break;
 
         case 'press':
-          result = await executeWithRetry(p => pressKey(p, cmd.key));
+          result = await executeWithRetry((p) => pressKey(p, cmd.key));
           break;
 
         case 'screenshot':
-          result = await executeWithRetry(p => takeScreenshot(p, cmd.filename));
+          result = await executeWithRetry((p) => takeScreenshot(p, cmd.filename));
           break;
 
         case 'focus':
-          result = await executeWithRetry(p => focusElement(p, cmd.selector));
+          result = await executeWithRetry((p) => focusElement(p, cmd.selector));
           break;
 
         // Bidirectional messaging endpoints
@@ -730,7 +743,7 @@ async function handleRequest(req, res) {
             const limit = cmd.last || 20;
             result = {
               lines: lines.slice(-limit),
-              total: lines.length
+              total: lines.length,
             };
           } else {
             result = { lines: [], total: 0 };
@@ -747,21 +760,19 @@ async function handleRequest(req, res) {
             config: {
               httpPort: CONFIG.httpPort,
               cdpPort: CONFIG.cdpPort,
-              tmuxEnabled: CONFIG.enableTmuxNotify
+              tmuxEnabled: CONFIG.enableTmuxNotify,
             },
             connection: {
               browserConnected: browser.isConnected(),
               pageCount: pages.length,
               currentPageUrl: appPage ? appPage.url() : null,
-              tmuxSession: getClaudeCodeTarget()
+              tmuxSession: getClaudeCodeTarget(),
             },
             files: {
               outboxExists: fs.existsSync(OUTBOX_FILE),
               coworkFileExists: fs.existsSync(COWORK_TO_CODE_FILE),
-              logSize: fs.existsSync(LOG_FILE)
-                ? fs.statSync(LOG_FILE).size
-                : 0
-            }
+              logSize: fs.existsSync(LOG_FILE) ? fs.statSync(LOG_FILE).size : 0,
+            },
           };
           break;
 
@@ -770,7 +781,7 @@ async function handleRequest(req, res) {
           result = {
             status: 'ok',
             timestamp: Date.now(),
-            tmuxSession: getClaudeCodeTarget()
+            tmuxSession: getClaudeCodeTarget(),
           };
           break;
 
@@ -779,24 +790,47 @@ async function handleRequest(req, res) {
           result = {
             error: 'Unknown command',
             available: {
-              query: ['elements', 'textareas', 'buttons', 'text', 'lastResponse', 'html', 'outbox', 'log'],
-              actions: ['click', 'clickText', 'clickCoords', 'type', 'typeRaw', 'press', 'screenshot', 'focus'],
+              query: [
+                'elements',
+                'textareas',
+                'buttons',
+                'text',
+                'lastResponse',
+                'html',
+                'outbox',
+                'log',
+              ],
+              actions: [
+                'click',
+                'clickText',
+                'clickCoords',
+                'type',
+                'typeRaw',
+                'press',
+                'screenshot',
+                'focus',
+              ],
               bidirectional: ['toClaudeCode', 'clearOutbox'],
-              health: ['status', 'ping']
-            }
+              health: ['status', 'ping'],
+            },
           };
       }
 
       res.writeHead(res.statusCode || 200);
       res.end(JSON.stringify(result, null, 2));
-
     } catch (error) {
       logError(`HTTP ${req.url}`, error);
       res.writeHead(500);
-      res.end(JSON.stringify({
-        error: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-      }, null, 2));
+      res.end(
+        JSON.stringify(
+          {
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+          },
+          null,
+          2
+        )
+      );
     }
   });
 }
@@ -836,7 +870,7 @@ async function isCDPAvailable() {
   try {
     execSync(`curl -s --max-time 2 http://127.0.0.1:${CONFIG.cdpPort}/json/version`, {
       encoding: 'utf8',
-      stdio: 'pipe'
+      stdio: 'pipe',
     });
     return true;
   } catch (_error) {
@@ -860,7 +894,7 @@ async function ensureCDPAvailable() {
   // Spawn Claude desktop app
   const child = spawn(CONFIG.claudePath, [], {
     detached: true,
-    stdio: 'ignore'
+    stdio: 'ignore',
   });
   child.unref();
 
@@ -870,7 +904,7 @@ async function ensureCDPAvailable() {
   process.stdout.write('Waiting for CDP');
 
   for (let i = 0; i < CONFIG.cdpStartupTimeout; i++) {
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     if (await isCDPAvailable()) {
       console.log('\nCDP ready');

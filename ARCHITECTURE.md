@@ -7,6 +7,7 @@
 ---
 
 ## Table of Contents
+
 1. [System Overview](#system-overview)
 2. [Architecture](#architecture)
 3. [Communication Channels](#communication-channels)
@@ -25,6 +26,7 @@
 ### What is Cowork Bridge?
 
 The cowork-bridge is a Node.js server that enables bidirectional communication between:
+
 - **Claude Code**: Terminal-based AI agent (this CLI)
 - **Claude Cowork**: Desktop Electron app with web UI
 
@@ -46,6 +48,7 @@ The cowork-bridge is a Node.js server that enables bidirectional communication b
 ```
 
 **Key Components**:
+
 1. **Bridge Server** (bridge.js): HTTP API + file watcher + CDP connection
 2. **Puppeteer**: Controls Claude Desktop via Chrome DevTools Protocol
 3. **Shared Files**: JSON-based async messaging between agents
@@ -57,13 +60,13 @@ The cowork-bridge is a Node.js server that enables bidirectional communication b
 
 ### Technology Stack
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| Bridge Server | Node.js HTTP | Exposes REST API for Claude Code |
-| Browser Control | Puppeteer-core | DOM automation via CDP |
-| IPC | JSON files + fs.watch() | Async messaging between agents |
-| Notifications | Tmux send-keys | Wake Claude Code when Cowork sends messages |
-| Logging | Text file append | Persistent conversation history |
+| Component       | Technology              | Purpose                                     |
+| --------------- | ----------------------- | ------------------------------------------- |
+| Bridge Server   | Node.js HTTP            | Exposes REST API for Claude Code            |
+| Browser Control | Puppeteer-core          | DOM automation via CDP                      |
+| IPC             | JSON files + fs.watch() | Async messaging between agents              |
+| Notifications   | Tmux send-keys          | Wake Claude Code when Cowork sends messages |
+| Logging         | Text file append        | Persistent conversation history             |
 
 ### Prerequisites
 
@@ -79,9 +82,9 @@ The cowork-bridge is a Node.js server that enables bidirectional communication b
 
 ### Ports
 
-| Port | Service | Purpose |
-|------|---------|---------|
-| 7777 | Bridge HTTP API | Default API endpoint |
+| Port | Service                  | Purpose                    |
+| ---- | ------------------------ | -------------------------- |
+| 7777 | Bridge HTTP API          | Default API endpoint       |
 | 9222 | Chrome DevTools Protocol | Browser control connection |
 
 ---
@@ -93,6 +96,7 @@ The cowork-bridge is a Node.js server that enables bidirectional communication b
 **Method**: HTTP POST/GET requests to localhost:7777
 
 **Capabilities**:
+
 - Type text into focused elements
 - Click buttons and elements
 - Press keyboard keys
@@ -101,6 +105,7 @@ The cowork-bridge is a Node.js server that enables bidirectional communication b
 - Query DOM elements
 
 **Example Flow**:
+
 ```bash
 # Send message
 curl -X POST http://localhost:7777/typeRaw --data-raw '{"text":"Hello Cowork"}'
@@ -117,11 +122,13 @@ curl http://localhost:7777/text
 **Primary channel**: `~/coverage-reports/tasks/` (CoWork sees this as `/sessions/.../mnt/tasks/` in its VM)
 
 **Key files**:
+
 - `tasks/agent-task-queue.json` — Formal task state machine with `coworkHasNewMessage` flag
 - `tasks/cowork-to-code-checkin.md` — CoWork's messages/specs for Code
 - `tasks/*-completion-report.md` — Code's reports back to CoWork
 
 **Flow**:
+
 1. CoWork writes spec/message to `tasks/cowork-to-code-checkin.md`
 2. Smart poller detects page content change via SHA-256 hash
 3. Poller sets `coworkHasNewMessage: true` in `tasks/agent-task-queue.json`
@@ -135,6 +142,7 @@ curl http://localhost:7777/text
 **File**: `~/cowork-bridge/conversation.log`
 
 **Format**:
+
 ```
 [2026-02-05 12:34:56] → TO COWORK: Hello from Claude Code
 [2026-02-05 12:35:02] ← FROM COWORK: Got it, working on that now
@@ -142,6 +150,7 @@ curl http://localhost:7777/text
 ```
 
 **Access**:
+
 ```bash
 # Read last 20 lines
 tail -20 ~/cowork-bridge/conversation.log
@@ -157,11 +166,13 @@ curl http://localhost:7777/log --data-raw '{"last":10}'
 **Purpose**: Bridge can send messages to Claude Code programmatically
 
 **Usage** (from bridge code):
+
 ```javascript
-sendToClaudeCode("Task completed", { resultCount: 42 });
+sendToClaudeCode('Task completed', { resultCount: 42 });
 ```
 
 **Claude Code reads**:
+
 ```bash
 curl http://localhost:7777/outbox
 # or
@@ -173,6 +184,7 @@ cat ~/cowork-bridge/outbox.json
 ## API Reference
 
 ### Base URL
+
 ```
 http://localhost:7777
 ```
@@ -180,9 +192,11 @@ http://localhost:7777
 ### Query Endpoints (GET)
 
 #### GET /text
+
 Returns visible text from the page body (limited to 5000 characters).
 
 **Response**:
+
 ```json
 "This is the visible text content..."
 ```
@@ -190,9 +204,11 @@ Returns visible text from the page body (limited to 5000 characters).
 ---
 
 #### GET /lastResponse
+
 Returns only the most recent assistant message from the chat. Tries multiple DOM selectors for Claude Desktop, falls back to the last large text block on the page.
 
 **Response**:
+
 ```json
 "This is the most recent assistant message content..."
 ```
@@ -202,9 +218,11 @@ Returns only the most recent assistant message from the chat. Tries multiple DOM
 ---
 
 #### GET /html
+
 Returns full HTML content of the page.
 
 **Response**:
+
 ```json
 "<!DOCTYPE html><html>...</html>"
 ```
@@ -212,9 +230,11 @@ Returns full HTML content of the page.
 ---
 
 #### GET /elements
+
 Returns all interactive elements with properties.
 
 **Response**:
+
 ```json
 [
   {
@@ -227,7 +247,7 @@ Returns all interactive elements with properties.
     "ariaLabel": "Submit form",
     "role": "button",
     "selector": "#submit-btn",
-    "bounds": {"x": 100, "y": 200, "width": 80, "height": 40}
+    "bounds": { "x": 100, "y": 200, "width": 80, "height": 40 }
   }
 ]
 ```
@@ -235,9 +255,11 @@ Returns all interactive elements with properties.
 ---
 
 #### GET /textareas
+
 Returns all text input fields (textarea, contenteditable, input[type=text]).
 
 **Response**:
+
 ```json
 [
   {
@@ -247,7 +269,7 @@ Returns all text input fields (textarea, contenteditable, input[type=text]).
     "class": "chat-input",
     "placeholder": "Type a message...",
     "value": "Current content",
-    "bounds": {"x": 50, "y": 300, "width": 400, "height": 100},
+    "bounds": { "x": 50, "y": 300, "width": 400, "height": 100 },
     "visible": true
   }
 ]
@@ -256,9 +278,11 @@ Returns all text input fields (textarea, contenteditable, input[type=text]).
 ---
 
 #### GET /buttons
+
 Returns all button elements.
 
 **Response**:
+
 ```json
 [
   {
@@ -269,7 +293,7 @@ Returns all button elements.
     "text": "Send",
     "ariaLabel": "Send message",
     "disabled": false,
-    "bounds": {"x": 460, "y": 310, "width": 60, "height": 30},
+    "bounds": { "x": 460, "y": 310, "width": 60, "height": 30 },
     "visible": true
   }
 ]
@@ -278,9 +302,11 @@ Returns all button elements.
 ---
 
 #### GET /status
+
 Health check endpoint with full system status.
 
 **Response**:
+
 ```json
 {
   "status": "ok",
@@ -308,15 +334,17 @@ Health check endpoint with full system status.
 ---
 
 #### GET /outbox
+
 Retrieves messages sent from bridge to Claude Code.
 
 **Response**:
+
 ```json
 [
   {
     "timestamp": "2026-02-05T12:34:56.789Z",
     "message": "Task completed",
-    "data": {"resultCount": 42},
+    "data": { "resultCount": 42 },
     "read": false
   }
 ]
@@ -325,14 +353,17 @@ Retrieves messages sent from bridge to Claude Code.
 ---
 
 #### GET /log
+
 Retrieves conversation log entries.
 
 **Request Body** (optional):
+
 ```json
-{"last": 10}
+{ "last": 10 }
 ```
 
 **Response**:
+
 ```json
 {
   "lines": [
@@ -348,61 +379,73 @@ Retrieves conversation log entries.
 ### Action Endpoints (POST)
 
 #### POST /click
+
 Clicks an element by CSS selector.
 
 **Request Body**:
+
 ```json
-{"selector": "#submit-btn"}
+{ "selector": "#submit-btn" }
 ```
 
 **Response**:
+
 ```json
-{"success": true, "action": "click", "selector": "#submit-btn"}
+{ "success": true, "action": "click", "selector": "#submit-btn" }
 ```
 
 ---
 
 #### POST /clickText
+
 Clicks an element containing specific text (uses XPath).
 
 **Request Body**:
+
 ```json
-{"text": "Submit"}
+{ "text": "Submit" }
 ```
 
 **Response**:
+
 ```json
-{"success": true, "action": "clickByText", "text": "Submit"}
+{ "success": true, "action": "clickByText", "text": "Submit" }
 ```
 
 ---
 
 #### POST /clickCoords
+
 Clicks at specific x, y coordinates.
 
 **Request Body**:
+
 ```json
-{"x": 100, "y": 200}
+{ "x": 100, "y": 200 }
 ```
 
 **Response**:
+
 ```json
-{"success": true, "action": "clickAtCoords", "x": 100, "y": 200}
+{ "success": true, "action": "clickAtCoords", "x": 100, "y": 200 }
 ```
 
 ---
 
 #### POST /type
+
 Types text into a selector (clears existing content first with triple-click).
 
 **Request Body**:
+
 ```json
-{"selector": "#message-input", "text": "Hello world"}
+{ "selector": "#message-input", "text": "Hello world" }
 ```
 
 **Response**:
+
 ```json
-{"success": true, "action": "type", "selector": "#message-input", "text": "Hello world"}
+{ "success": true, "action": "type", "selector": "#message-input", "text": "Hello world" }
 ```
 
 **Side Effect**: Logs message to conversation.log
@@ -410,16 +453,19 @@ Types text into a selector (clears existing content first with triple-click).
 ---
 
 #### POST /typeRaw
+
 Types into the currently focused element without clearing.
 
 **Request Body**:
+
 ```json
-{"text": "Hello from Claude Code"}
+{ "text": "Hello from Claude Code" }
 ```
 
 **Response**:
+
 ```json
-{"success": true, "action": "typeIntoFocused", "text": "Hello from Claude Code"}
+{ "success": true, "action": "typeIntoFocused", "text": "Hello from Claude Code" }
 ```
 
 **Side Effect**: Logs message to conversation.log
@@ -427,48 +473,57 @@ Types into the currently focused element without clearing.
 ---
 
 #### POST /press
+
 Presses a keyboard key.
 
 **Request Body**:
+
 ```json
-{"key": "Enter"}
+{ "key": "Enter" }
 ```
 
 **Common Keys**: "Enter", "Escape", "Tab", "Backspace", "ArrowUp", "ArrowDown", "Control", "Meta"
 
 **Response**:
+
 ```json
-{"success": true, "action": "pressKey", "key": "Enter"}
+{ "success": true, "action": "pressKey", "key": "Enter" }
 ```
 
 ---
 
 #### POST /focus
+
 Focuses an element by selector.
 
 **Request Body**:
+
 ```json
-{"selector": "#message-input"}
+{ "selector": "#message-input" }
 ```
 
 **Response**:
+
 ```json
-{"success": true, "action": "focus", "selector": "#message-input"}
+{ "success": true, "action": "focus", "selector": "#message-input" }
 ```
 
 ---
 
 #### POST /screenshot
+
 Takes a screenshot and saves to bridge directory.
 
 **Request Body** (optional):
+
 ```json
-{"filename": "my-screenshot.png"}
+{ "filename": "my-screenshot.png" }
 ```
 
 **Default**: `screenshot.png`
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -482,38 +537,44 @@ Takes a screenshot and saves to bridge directory.
 ---
 
 #### POST /toClaudeCode
+
 Sends a message from bridge to Claude Code via outbox.json.
 
 **Request Body**:
+
 ```json
 {
   "message": "Task completed successfully",
-  "data": {"resultCount": 42, "errors": 0}
+  "data": { "resultCount": 42, "errors": 0 }
 }
 ```
 
 **Response**:
+
 ```json
 {
   "timestamp": "2026-02-05T12:34:56.789Z",
   "message": "Task completed successfully",
-  "data": {"resultCount": 42, "errors": 0},
+  "data": { "resultCount": 42, "errors": 0 },
   "read": false
 }
 ```
 
 **Side Effects**:
+
 - Appends to outbox.json
 - Sends tmux notification (if enabled)
 
 ---
 
 #### POST /clearOutbox
+
 Clears the outbox.json file.
 
 **Response**:
+
 ```json
-{"success": true, "action": "clearOutbox"}
+{ "success": true, "action": "clearOutbox" }
 ```
 
 ---
@@ -525,11 +586,12 @@ All endpoints return errors with HTTP 500:
 ```json
 {
   "error": "Target closed. Most likely the page has been closed.",
-  "stack": "Error: Target closed..."  // Only in development mode
+  "stack": "Error: Target closed..." // Only in development mode
 }
 ```
 
 **Common Errors**:
+
 - "Target closed" - Page was closed or navigated away
 - "Execution context was destroyed" - Page detached
 - "Session closed" - Browser connection lost
@@ -618,16 +680,19 @@ curl -s -X POST http://localhost:7777/click \
 ### Monitoring Cowork Messages
 
 **Option 1: Check file directly**
+
 ```bash
 cat ~/cowork-bridge/cowork-to-code.json | jq '.'
 ```
 
 **Option 2: Watch conversation log**
+
 ```bash
 tail -f ~/cowork-bridge/conversation.log
 ```
 
 **Option 3: Tmux notifications** (if enabled)
+
 - Bridge automatically sends notifications to your tmux session
 - You'll see: `📬 COWORK MESSAGE: Check ~/cowork-bridge/outbox.json`
 
@@ -678,6 +743,7 @@ The bridge must be running and connected to your Electron app.
 **Step 1**: Create or update the file `~/cowork-bridge/cowork-to-code.json`
 
 **Format**:
+
 ```json
 [
   {
@@ -692,11 +758,13 @@ The bridge must be running and connected to your Electron app.
 ```
 
 **Step 2**: The bridge will automatically:
+
 1. Detect file change (within 500ms)
 2. Log message to conversation.log
 3. Send tmux notification to Claude Code (if configured)
 
 **Example using JavaScript** (from Cowork context):
+
 ```javascript
 const fs = require('fs');
 const path = require('path');
@@ -704,19 +772,21 @@ const path = require('path');
 function sendToClaudeCode(message, data = {}) {
   const filePath = path.join(process.env.HOME, 'cowork-bridge', 'cowork-to-code.json');
 
-  const payload = [{
-    timestamp: new Date().toISOString(),
-    message: message,
-    data: data
-  }];
+  const payload = [
+    {
+      timestamp: new Date().toISOString(),
+      message: message,
+      data: data,
+    },
+  ];
 
   fs.writeFileSync(filePath, JSON.stringify(payload, null, 2));
 }
 
 // Usage
-sendToClaudeCode("Analysis complete", {
+sendToClaudeCode('Analysis complete', {
   resultCount: 42,
-  status: "success"
+  status: 'success',
 });
 ```
 
@@ -730,7 +800,7 @@ const outbox = JSON.parse(
   fs.readFileSync(path.join(process.env.HOME, 'cowork-bridge', 'outbox.json'), 'utf8')
 );
 
-const unreadMessages = outbox.filter(msg => !msg.read);
+const unreadMessages = outbox.filter((msg) => !msg.read);
 console.log('Unread:', unreadMessages);
 ```
 
@@ -756,17 +826,17 @@ All configuration is done via environment variables.
 
 ### Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `CLAUDE_PATH` | `/Users/avinoam/Claude-Debug.app/Contents/MacOS/Claude` | Path to patched Claude Desktop executable |
-| `HTTP_PORT` | `7777` | HTTP API port |
-| `CDP_PORT` | `9222` | Chrome DevTools Protocol port |
-| `BRIDGE_DIR` | `__dirname` | Directory for shared files (conversation.log, outbox.json, etc.) |
-| `TMUX_SESSION` | `claude` | Tmux session name for notifications |
-| `CDP_TIMEOUT` | `30` | Seconds to wait for CDP to become available |
-| `FILE_WATCH_DEBOUNCE` | `500` | Milliseconds to debounce file watch events |
-| `OUTBOX_MAX` | `50` | Maximum number of messages to keep in outbox.json |
-| `ENABLE_TMUX_NOTIFY` | `true` | Enable/disable tmux notifications (`false` to disable) |
+| Variable              | Default                                                 | Description                                                      |
+| --------------------- | ------------------------------------------------------- | ---------------------------------------------------------------- |
+| `CLAUDE_PATH`         | `/Users/avinoam/Claude-Debug.app/Contents/MacOS/Claude` | Path to patched Claude Desktop executable                        |
+| `HTTP_PORT`           | `7777`                                                  | HTTP API port                                                    |
+| `CDP_PORT`            | `9222`                                                  | Chrome DevTools Protocol port                                    |
+| `BRIDGE_DIR`          | `__dirname`                                             | Directory for shared files (conversation.log, outbox.json, etc.) |
+| `TMUX_SESSION`        | `claude`                                                | Tmux session name for notifications                              |
+| `CDP_TIMEOUT`         | `30`                                                    | Seconds to wait for CDP to become available                      |
+| `FILE_WATCH_DEBOUNCE` | `500`                                                   | Milliseconds to debounce file watch events                       |
+| `OUTBOX_MAX`          | `50`                                                    | Maximum number of messages to keep in outbox.json                |
+| `ENABLE_TMUX_NOTIFY`  | `true`                                                  | Enable/disable tmux notifications (`false` to disable)           |
 
 ### Example: Custom Configuration
 
@@ -809,6 +879,7 @@ With default configuration:
 **Cause**: Page navigated, closed, or browser tab changed
 
 **Recovery**: Automatic
+
 - Bridge catches these errors
 - Calls `refreshPage()` to find active page
 - Retries the operation once
@@ -821,16 +892,19 @@ With default configuration:
 ### 2. Browser Disconnected
 
 **Symptom**:
+
 - API calls return connection errors
 - Bridge logs "Browser disconnected unexpectedly"
 - Process exits with code 1
 
 **Cause**:
+
 - Claude Desktop closed
 - CDP connection lost
 - Network issue (unlikely on localhost)
 
 **Recovery**: Restart bridge
+
 ```bash
 # Kill existing bridge
 pkill -f "node.*bridge.js"
@@ -849,6 +923,7 @@ node bridge.js
 **Cause**: Another bridge instance is running
 
 **Recovery**:
+
 ```bash
 # Find and kill the process
 lsof -ti:7777 | xargs kill -9
@@ -867,6 +942,7 @@ node bridge.js
 **Symptom**: Bridge hangs with "Waiting for CDP" dots, then times out
 
 **Cause**:
+
 - Claude Desktop not running
 - CDP not enabled (wrong app version)
 - Port 9222 blocked
@@ -874,12 +950,14 @@ node bridge.js
 **Recovery**:
 
 **Option 1**: Let bridge start it automatically
+
 ```bash
 # Bridge will spawn Claude-Debug.app if CDP not available
 node bridge.js
 ```
 
 **Option 2**: Start Claude manually first
+
 ```bash
 # Start Claude with CDP enabled
 /Users/avinoam/Claude-Debug.app/Contents/MacOS/Claude &
@@ -892,6 +970,7 @@ node bridge.js
 ```
 
 **Option 3**: Verify Claude is patched correctly
+
 ```bash
 # Test CDP availability
 curl http://127.0.0.1:9222/json/version
@@ -907,11 +986,13 @@ curl http://127.0.0.1:9222/json/version
 **Symptom**: Cowork writes to cowork-to-code.json but bridge doesn't log it
 
 **Cause**:
+
 - File written too quickly (debounce issue)
 - File write incomplete (partial JSON)
 - File permissions issue
 
 **Recovery**:
+
 ```bash
 # Check file permissions
 ls -la ~/cowork-bridge/cowork-to-code.json
@@ -933,11 +1014,13 @@ echo '[{"timestamp":"2026-02-05T12:00:00Z","message":"test"}]' > ~/cowork-bridge
 **Symptom**: `/screenshot` endpoint returns error or empty file
 
 **Cause**:
+
 - Page not loaded
 - Insufficient disk space
 - Permission issue
 
 **Recovery**:
+
 ```bash
 # Check page status
 curl http://localhost:7777/status | jq '.connection.currentPageUrl'
@@ -962,6 +1045,7 @@ curl -s -X POST http://localhost:7777/screenshot \
 **Cause**: conversation.log grows unbounded
 
 **Recovery**:
+
 ```bash
 # Check log size
 du -h ~/cowork-bridge/conversation.log
@@ -979,11 +1063,13 @@ touch ~/cowork-bridge/conversation.log
 ### General Debugging Steps
 
 1. **Check bridge status**:
+
    ```bash
    curl http://localhost:7777/status | jq '.'
    ```
 
 2. **Check bridge logs**:
+
    ```bash
    # If bridge running in background
    tail -f ~/cowork-bridge/bridge.log
@@ -993,6 +1079,7 @@ touch ~/cowork-bridge/conversation.log
    ```
 
 3. **Test basic connectivity**:
+
    ```bash
    # HTTP API
    curl http://localhost:7777/status
@@ -1030,6 +1117,7 @@ touch ~/cowork-bridge/conversation.log
 **Mitigation**: None - trust-based system
 
 **Implication**:
+
 - Malicious local software could send commands
 - Not suitable for multi-user systems
 - Only run bridge on trusted machines
@@ -1041,6 +1129,7 @@ touch ~/cowork-bridge/conversation.log
 **Risk**: Chrome DevTools Protocol gives complete control over the Electron app
 
 **Capabilities**:
+
 - Read all page content
 - Execute arbitrary JavaScript
 - Access cookies, localStorage, sessionStorage
@@ -1059,6 +1148,7 @@ touch ~/cowork-bridge/conversation.log
 **Risk**: Cowork runs in a sandboxed VM with limited system access
 
 **Capabilities of Cowork**:
+
 - Write to shared files (cowork-to-code.json)
 - Read from outbox.json
 - No direct network access outside VM
@@ -1073,12 +1163,14 @@ touch ~/cowork-bridge/conversation.log
 **Risk**: conversation.log contains plaintext history of all messages
 
 **Sensitive Data**:
+
 - API keys if typed into Cowork
 - Passwords if discussed
 - Private URLs
 - Personal information
 
 **Mitigation**:
+
 - Treat conversation.log as sensitive
 - Rotate logs regularly
 - Don't commit to version control (add to .gitignore)
@@ -1093,6 +1185,7 @@ touch ~/cowork-bridge/conversation.log
 **Mitigation**: None - file-based IPC is inherently trust-based
 
 **Implication**:
+
 - Other local processes could inject messages
 - Message integrity not guaranteed
 - Suitable for single-user development only
@@ -1104,6 +1197,7 @@ touch ~/cowork-bridge/conversation.log
 **Risk**: Screenshots capture whatever is visible in Claude Desktop
 
 **Sensitive Data**:
+
 - Authentication tokens in UI
 - Private messages in Cowork chat
 - User email addresses
@@ -1131,6 +1225,7 @@ touch ~/cowork-bridge/conversation.log
 To enable CDP on Claude Desktop, the app must be patched:
 
 **Step 1: Extract ASAR archive**
+
 ```bash
 npx asar extract /Applications/Claude.app/Contents/Resources/app.asar ./app-extracted
 ```
@@ -1138,13 +1233,15 @@ npx asar extract /Applications/Claude.app/Contents/Resources/app.asar ./app-extr
 **Step 2: Inject CDP flag**
 
 Edit `app-extracted/main.js` or `app-extracted/index.js` to add:
+
 ```javascript
-app.commandLine.appendSwitch("remote-debugging-port", "9222");
+app.commandLine.appendSwitch('remote-debugging-port', '9222');
 ```
 
 Place this **before** any `app.whenReady()` or `app.on('ready')` calls.
 
 **Step 3: Repackage ASAR**
+
 ```bash
 npx asar pack ./app-extracted /path/to/Claude-Debug.app/Contents/Resources/app.asar
 ```
@@ -1155,11 +1252,13 @@ The app's code signature includes an integrity hash. Update it in:
 `Claude-Debug.app/Contents/Resources/electron.asar.unpacked/Resources/integrity-hash.json`
 
 Calculate new hash:
+
 ```bash
 shasum -a 256 Claude-Debug.app/Contents/Resources/app.asar
 ```
 
 Update the JSON:
+
 ```json
 {
   "app.asar": "NEW_SHA256_HASH_HERE"
@@ -1169,6 +1268,7 @@ Update the JSON:
 **Step 5: Re-sign with entitlements**
 
 Create `entitlements.plist`:
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -1183,6 +1283,7 @@ Create `entitlements.plist`:
 ```
 
 Re-sign:
+
 ```bash
 codesign --deep --force --sign - \
   --entitlements entitlements.plist \
@@ -1202,6 +1303,7 @@ curl http://127.0.0.1:9222/json/version
 ```
 
 **Important Notes**:
+
 - This process voids the app's code signature
 - macOS may show security warnings on first launch
 - Allow in System Preferences > Security & Privacy
@@ -1217,18 +1319,20 @@ curl http://127.0.0.1:9222/json/version
 ```javascript
 const browser = await puppeteer.connect({
   browserURL: 'http://127.0.0.1:9222',
-  defaultViewport: null  // Use existing viewport
+  defaultViewport: null, // Use existing viewport
 });
 ```
 
 **Why puppeteer-core**: Doesn't bundle Chromium, connects to external browser
 
 **Page Selection**:
+
 1. Get all pages: `await browser.pages()`
 2. Find page with `claude.ai` in URL
 3. Fallback to last page (most recently active)
 
 **Page Refresh Logic**:
+
 - Bridge keeps reference to `appPage`
 - On "Target closed" or "detached" errors, calls `refreshPage()`
 - Finds new active page from browser
@@ -1263,6 +1367,7 @@ fs.watch(bridgeDir, (eventType, filename) => {
 **Purpose**: Wake Claude Code terminal when Cowork sends a message
 
 **Implementation**:
+
 ```javascript
 function wakeClaudeCode(message) {
   const session = getClaudeTmuxSession();
@@ -1272,6 +1377,7 @@ function wakeClaudeCode(message) {
 ```
 
 **Session Discovery**:
+
 1. Try configured session name (default: "claude")
 2. Search for session with "claude" in name
 3. Fallback to first available session
@@ -1298,15 +1404,18 @@ function wakeClaudeCode(message) {
 ### Conversation Log Format
 
 **Timestamp**: ISO 8601, truncated to seconds
+
 ```
 2026-02-05 12:34:56
 ```
 
 **Direction Arrows**:
+
 - `→ TO COWORK`: Message from Claude Code to Cowork
 - `← FROM COWORK`: Message from Cowork to Claude Code
 
 **Line Format**:
+
 ```
 [TIMESTAMP] DIRECTION: MESSAGE_CONTENT
 ```
@@ -1336,6 +1445,7 @@ if (outbox.length > CONFIG.outboxMaxMessages) {
 **Signals**: SIGINT (Ctrl+C), SIGTERM
 
 **Shutdown Sequence**:
+
 1. Set `isShuttingDown` flag (prevents duplicate shutdown)
 2. Close HTTP server
 3. Disconnect from browser (but don't close it)
@@ -1414,26 +1524,29 @@ pkill -f "node.*bridge.js" && node ~/cowork-bridge/bridge.js &
 ### Common Selector Patterns for Claude Cowork
 
 **Chat Input** (Claude Cowork UI):
+
 ```javascript
 // Main message input
-"textarea[placeholder*='message']"
-"[contenteditable='true']"
+"textarea[placeholder*='message']";
+"[contenteditable='true']";
 
 // Send button
-"button[aria-label*='Send']"
-"button:has-text('Send')"
+"button[aria-label*='Send']";
+"button:has-text('Send')";
 ```
 
 **Navigation**:
+
 ```javascript
 // New conversation
-"button:has-text('New chat')"
+"button:has-text('New chat')";
 
 // Settings
-"button[aria-label='Settings']"
+"button[aria-label='Settings']";
 ```
 
 **Finding elements by text**:
+
 ```bash
 # Use clickText endpoint
 curl -X POST http://localhost:7777/clickText --data-raw '{"text":"Send"}'
@@ -1455,6 +1568,7 @@ This architecture document covers the complete cowork-bridge system from an AI a
 **For Cowork agents**: Write to cowork-to-code.json to respond
 
 **Next Steps**:
+
 - Review API Reference for endpoint details
 - Test basic communication with Usage Guide examples
 - Implement error handling based on Failure Modes section

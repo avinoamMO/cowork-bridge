@@ -1,7 +1,7 @@
 ---
 name: Feature Request
 about: Suggest a new endpoint, integration, or enhancement to the bridge
-title: "[Feature] "
+title: '[Feature] '
 labels: enhancement
 assignees: ''
 ---
@@ -15,6 +15,7 @@ A clear description of what you'd like to see added.
 Why is this feature useful? What multi-agent workflow does it enable?
 
 **Example scenarios:**
+
 - "I want WebSocket support so agents can stream messages in real-time"
 - "I need authentication on the HTTP server to prevent accidental access"
 - "I want automatic CDP reconnection when the browser restarts"

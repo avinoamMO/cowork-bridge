@@ -628,7 +628,9 @@ describe('Error Handling', () => {
     const result = await executeWithRetry(() => {
       if (firstCall) {
         firstCall = false;
-        throw new Error('Execution context was destroyed, most likely because of page navigation or Target closed');
+        throw new Error(
+          'Execution context was destroyed, most likely because of page navigation or Target closed'
+        );
       }
       return { success: true };
     });

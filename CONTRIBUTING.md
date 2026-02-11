@@ -96,16 +96,19 @@ npx jest tests/bridge.test.js
 ## Areas Where Help Is Welcome
 
 ### High Priority
+
 - **Reconnection logic**: Automatic re-connect when browser disconnects
 - **Error recovery**: More robust handling of CDP connection drops
 - **Cross-platform**: Windows and Linux support for CDP patching
 
 ### Medium Priority
+
 - **Authentication**: Optional API key for the HTTP server
 - **Rate limiting**: Protect against accidental request floods
 - **WebSocket**: Real-time event streaming alongside REST API
 
 ### Nice to Have
+
 - **Dashboard**: Simple web UI showing bridge status and conversation log
 - **Metrics**: Request latency, uptime, error rates
 - **Plugin system**: Extensible action handlers

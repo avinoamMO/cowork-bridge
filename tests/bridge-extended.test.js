@@ -163,7 +163,9 @@ describe('Connection Error Handling', () => {
     const result = await executeWithRetry(() => {
       attempt++;
       if (attempt === 1) {
-        throw new Error('Execution context was destroyed, most likely because of page navigation or detached');
+        throw new Error(
+          'Execution context was destroyed, most likely because of page navigation or detached'
+        );
       }
       return { success: true };
     });
@@ -370,7 +372,9 @@ describe('Bridge State Management', () => {
     let cleanupCount = 0;
 
     function shutdown() {
-      if (isShuttingDown) { return; }
+      if (isShuttingDown) {
+        return;
+      }
       isShuttingDown = true;
       cleanupCount++;
     }
@@ -471,7 +475,9 @@ describe('HTTP API Extended', () => {
       }
 
       let body = '';
-      req.on('data', (chunk) => { body += chunk.toString(); });
+      req.on('data', (chunk) => {
+        body += chunk.toString();
+      });
       req.on('end', () => {
         const action = parseAction(req.url);
         let result;
@@ -536,7 +542,9 @@ describe('HTTP API Extended', () => {
 
       const req = http.request(options, (res) => {
         let data = '';
-        res.on('data', (chunk) => { data += chunk; });
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
         res.on('end', () => {
           resolve({
             statusCode: res.statusCode,
@@ -547,7 +555,9 @@ describe('HTTP API Extended', () => {
       });
 
       req.on('error', reject);
-      if (body) { req.write(JSON.stringify(body)); }
+      if (body) {
+        req.write(JSON.stringify(body));
+      }
       req.end();
     });
   }
@@ -607,7 +617,9 @@ describe('HTTP API Extended', () => {
     const result = await new Promise((resolve, reject) => {
       const req = http.request(options, (res) => {
         let data = '';
-        res.on('data', (chunk) => { data += chunk; });
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
         res.on('end', () => {
           resolve({ statusCode: res.statusCode, body: JSON.parse(data) });
         });

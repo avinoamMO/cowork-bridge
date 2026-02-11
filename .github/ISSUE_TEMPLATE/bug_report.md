@@ -1,7 +1,7 @@
 ---
 name: Bug Report
 about: Report a bug with the bridge server, poller, or CDP connection
-title: "[Bug] "
+title: '[Bug] '
 labels: bug
 assignees: ''
 ---

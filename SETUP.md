@@ -96,6 +96,7 @@ The easiest approach is to **let Electron tell you the correct hash**:
 ```
 
 Look for output like:
+
 ```
 FATAL:asar_util.cc Expected hash: abc123... Actual hash: def456...
 ```
@@ -164,6 +165,7 @@ node bridge.js
 ```
 
 Expected output:
+
 ```
 ==================================================
 COWORK BRIDGE - Starting
@@ -218,27 +220,34 @@ To disable: `ENABLE_TMUX_NOTIFY=false node bridge.js`
 ## Troubleshooting
 
 ### "Port 7777 already in use"
+
 ```bash
 lsof -ti:7777 | xargs kill -9
 node bridge.js
 ```
 
 ### App crashes on launch
+
 The ASAR integrity hash is wrong. Re-do step 2.7.
 
 ### "Connection refused" on port 9222
+
 CDP isn't enabled. Verify the injection in step 2.5 is at the very top of the entry file.
 
 ### App launches but Cowork workspace shows error
+
 Missing entitlements. Re-do steps 2.8 and 2.9 — make sure you extracted entitlements from the **original** `/Applications/Claude.app`.
 
 ### Puppeteer can't connect
+
 Make sure you're using `puppeteer-core` (not full puppeteer). The bridge does this already if you ran `npm install`.
 
 ### App says "already the latest version" and exits
+
 This happens if you try to launch the binary directly while another Claude instance is running. Quit the other Claude first, or use `open ~/Claude-Debug.app`.
 
 ### After a Claude update, the patch breaks
+
 You'll need to redo the patching process (steps 2.1 through 2.9) since the app.asar changes with each update.
 
 ---
@@ -247,14 +256,14 @@ You'll need to redo the patching process (steps 2.1 through 2.9) since the app.a
 
 All optional — defaults work out of the box:
 
-| Variable | Default | What it does |
-|----------|---------|-------------|
-| `CLAUDE_PATH` | `~/Claude-Debug.app/Contents/MacOS/Claude` | Path to patched Claude binary |
-| `HTTP_PORT` | `7777` | Bridge API port |
-| `CDP_PORT` | `9222` | Chrome DevTools Protocol port |
-| `TMUX_SESSION` | `claude` | Tmux session name for notifications |
-| `ENABLE_TMUX_NOTIFY` | `true` | Set to `false` to disable tmux |
-| `CDP_TIMEOUT` | `30` | Seconds to wait for CDP on startup |
+| Variable             | Default                                    | What it does                        |
+| -------------------- | ------------------------------------------ | ----------------------------------- |
+| `CLAUDE_PATH`        | `~/Claude-Debug.app/Contents/MacOS/Claude` | Path to patched Claude binary       |
+| `HTTP_PORT`          | `7777`                                     | Bridge API port                     |
+| `CDP_PORT`           | `9222`                                     | Chrome DevTools Protocol port       |
+| `TMUX_SESSION`       | `claude`                                   | Tmux session name for notifications |
+| `ENABLE_TMUX_NOTIFY` | `true`                                     | Set to `false` to disable tmux      |
+| `CDP_TIMEOUT`        | `30`                                       | Seconds to wait for CDP on startup  |
 
 ```bash
 # Example: custom ports
