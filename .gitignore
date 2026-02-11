@@ -17,6 +17,11 @@ coverage/
 RESEARCH_CLAUDE_COWORK.md
 COWORK_EXECUTIVE_SUMMARY.md
 
+# env files
+.env
+.env.local
+.env*.local
+
 # OS files
 .DS_Store
 Thumbs.db
